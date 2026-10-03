@@ -1,0 +1,253 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #F7F2E8;
+    --surface: #FFFFFF;
+    --surface-muted: #EFECE6;
+    --border: #E2DCD0;
+    --primary: #0E3B2E;
+    --primary-dark: #08261E;
+    --accent: #A67C52;
+    --text: #263238;
+    --text-strong: #111816;
+    --success: #0E3B2E;
+  }
+
+  html { background: #F7F2E8; color-scheme: light; scroll-behavior: smooth; }
+  body { @apply bg-background font-sans text-text antialiased; }
+  h1, h2, h3, h4 { @apply font-display text-text-strong; }
+  :focus-visible { outline: 2px solid #0E3B2E; outline-offset: 2px; }
+  ::selection { background: #0E3B2E; color: #fff; }
+}
+
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-hero-fade {
+  animation: heroFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-fade {
+    animation: heroFadeInReduced 0.3s ease forwards !important;
+  }
+  @keyframes heroFadeInReduced {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+@layer components {
+  .btn { 
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 relative isolate overflow-hidden; 
+  }
+  
+  .btn-primary { 
+    @apply btn bg-[#0E3B2E] text-white hover:bg-[#08261E] active:scale-[0.98]; 
+    box-shadow: 
+      inset 0 1.5px 0.5px rgba(255, 255, 255, 0.65),
+      inset 0 -1.5px 0.5px rgba(255, 255, 255, 0.25),
+      0 6px 18px rgba(14, 59, 46, 0.25);
+  }
+
+  .btn-secondary { 
+    @apply btn border border-[#0E3B2E]/40 bg-[#F7F2E8] text-[#0E3B2E] hover:bg-[#efece6] hover:border-[#0E3B2E] active:scale-[0.98]; 
+    box-shadow: 
+      inset 0 1.5px 0.5px rgba(255, 255, 255, 0.95),
+      inset 0 -1.5px 0.5px rgba(14, 59, 46, 0.15),
+      0 4px 14px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* Major Conversion Action Buttons (White Fill) */
+  .btn-red { 
+    @apply btn bg-white text-[#111816] border border-border/80 active:scale-[0.98]; 
+    box-shadow: 
+      inset 0 1.5px 0.5px rgba(255, 255, 255, 0.95),
+      0 4px 14px rgba(0, 0, 0, 0.08);
+  }
+  .btn-red:hover {
+    background-color: #f8fafc;
+  }
+
+  .btn-conversion { 
+    @apply btn bg-[#E10600] text-white hover:bg-[#b80500] active:scale-[0.98]; 
+    box-shadow: 
+      inset 0 1.5px 0.5px rgba(255, 255, 255, 0.75),
+      inset 0 -1.5px 0.5px rgba(255, 255, 255, 0.35),
+      0 6px 20px rgba(225, 6, 0, 0.3);
+  }
+  
+  .btn-outline { 
+    @apply btn border border-primary/30 bg-surface/80 text-primary hover:bg-primary hover:text-white hover:border-primary active:scale-[0.98]; 
+    box-shadow: 
+      inset 0 1.5px 0.5px rgba(255, 255, 255, 0.8),
+      inset 0 -1.5px 0.5px rgba(0, 0, 0, 0.05),
+      0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .btn-green { 
+    @apply btn bg-primary text-white hover:bg-primary-dark active:scale-[0.98]; 
+    box-shadow: 
+      inset 0 1.5px 0.5px rgba(255, 255, 255, 0.65),
+      inset 0 -1.5px 0.5px rgba(255, 255, 255, 0.25),
+      0 6px 18px rgba(14, 59, 46, 0.25);
+  }
+  .field { @apply w-full rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-text-strong placeholder:text-muted/60 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all; }
+  .label { @apply mb-1.5 block text-xs font-semibold text-text; }
+  .container-x { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animate-rise,
+  .animate-slide-left,
+  .animate-slide-left-delay-1,
+  .animate-slide-left-delay-2,
+  .animate-slide-left-delay-3 { animation: none !important; }
+}
+
+@keyframes slideInLeft {
+  0% {
+    opacity: 0;
+    transform: translate3d(-35px, 0, 0) scale(0.98);
+    filter: blur(4px);
+  }
+  60% {
+    opacity: 0.85;
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+.animate-slide-left {
+  animation: slideInLeft 0.95s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity, filter;
+}
+
+.animate-slide-left-delay-1 {
+  animation: slideInLeft 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+  will-change: transform, opacity, filter;
+}
+
+.animate-slide-left-delay-2 {
+  animation: slideInLeft 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+  will-change: transform, opacity, filter;
+}
+
+.animate-slide-left-delay-3 {
+  animation: slideInLeft 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+  will-change: transform, opacity, filter;
+}
+
+/* ────────────────────────────────────────────────────────── */
+/* MULTI-STEP FORM TRANSITION STYLING                         */
+/* ────────────────────────────────────────────────────────── */
+:root {
+  --step-translate: 14px;
+}
+@media (min-width: 640px) {
+  :root {
+    --step-translate: 20px;
+  }
+}
+
+@keyframes stepExitLeft {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(calc(-1 * var(--step-translate)));
+  }
+}
+
+@keyframes stepExitRight {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(var(--step-translate));
+  }
+}
+
+@keyframes stepEnterRight {
+  0% {
+    opacity: 0;
+    transform: translateX(var(--step-translate));
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes stepEnterLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(calc(-1 * var(--step-translate)));
+  }
+}
+
+.step-exit-left {
+  animation: stepExitLeft 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.step-exit-right {
+  animation: stepExitRight 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.step-enter-right {
+  animation: stepEnterRight 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.step-enter-left {
+  animation: stepEnterLeft 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-exit-left,
+  .step-exit-right,
+  .step-enter-right,
+  .step-enter-left {
+    animation-duration: 200ms !important;
+    transform: none !important;
+  }
+  @keyframes stepExitLeft {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes stepExitRight {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes stepEnterRight {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes stepEnterLeft {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+}
