@@ -316,7 +316,7 @@ export default async function AboutPage() {
               </p>
             </div>
             <div className="w-full sm:w-auto shrink-0">
-              <SpecularButton href="/contact" variant="white" size="md" className="w-full sm:w-auto">
+              <SpecularButton href="#showroom-map" variant="white" size="md" className="w-full sm:w-auto">
                 <span>Get Showroom Directions</span>
                 <ArrowRight className="h-4 w-4" />
               </SpecularButton>
@@ -494,7 +494,7 @@ export default async function AboutPage() {
       </section>
 
       {/* 5. SHOWROOM / LOCATION SECTION */}
-      <section className="container-x">
+      <section id="showroom-map" className="container-x scroll-mt-24 sm:scroll-mt-28">
         <div className="grid gap-3 sm:gap-6 lg:grid-cols-12">
           {/* Location Details */}
           <div className="flex flex-col justify-between rounded-xl border border-line bg-surface p-4 sm:rounded-2xl sm:p-8 lg:col-span-5 shadow-sm">

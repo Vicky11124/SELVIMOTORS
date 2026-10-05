@@ -197,7 +197,7 @@ export default function ContactPage() {
           </div>
 
           {/* Map Integration Section */}
-          <section className="order-2 lg:order-3 lg:col-span-12 overflow-hidden rounded-2xl border border-primary/30 bg-surface shadow-xl">
+          <section id="map" className="scroll-mt-24 order-2 lg:order-3 lg:col-span-12 overflow-hidden rounded-2xl border border-primary/30 bg-surface shadow-xl">
             <div className="flex flex-col items-start justify-between gap-3 border-b border-primary/20 bg-[#0E3B2E] p-4 sm:flex-row sm:items-center sm:px-6 text-white">
               <div>
                 <h3 className="flex items-center gap-2 text-base font-bold text-white sm:text-lg">
