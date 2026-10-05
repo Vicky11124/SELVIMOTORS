@@ -1,20 +1,24 @@
 # Dependencies
-node_modules
+node_modules/
+/.pnp
+.pnp.js
+.yarn/install-state.gz
 
 # Next.js build output
-.next
-out
+.next/
+out/
 
 # Production build
 /build
+dist/
 
 # Environment variables (keep secrets out of git)
 .env
+.env*.local
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-.env*.local
 
 # TypeScript
 next-env.d.ts
@@ -29,15 +33,22 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
 
 # Editor
 .vscode/
 .idea/
 *.swp
 *.swo
+*.sublime-workspace
+*.sublime-project
 
 # Vercel
 .vercel
 
 # Turbopack
 .turbo
+
+# Temporary image imports / staging
+public/hero image/

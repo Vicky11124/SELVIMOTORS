@@ -42,6 +42,7 @@ export default function HowItWorksTimeline() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [activeSteps, setActiveSteps] = useState<number[]>([]);
   const [lineHeight, setLineHeight] = useState<number>(0);
+  const rafId = useRef<number | null>(null);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -67,12 +68,16 @@ export default function HowItWorksTimeline() {
 
     // Scroll listener for smooth green timeline progress fill
     const handleScroll = () => {
-      const rect = section.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const totalHeight = rect.height;
-      const currentScroll = windowHeight - rect.top;
-      const progress = Math.min(1, Math.max(0, currentScroll / (totalHeight + windowHeight * 0.2)));
-      setLineHeight(progress * 100);
+      if (rafId.current !== null) return;
+      rafId.current = requestAnimationFrame(() => {
+        rafId.current = null;
+        const rect = section.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        const totalHeight = rect.height;
+        const currentScroll = windowHeight - rect.top;
+        const progress = Math.min(1, Math.max(0, currentScroll / (totalHeight + windowHeight * 0.2)));
+        setLineHeight(progress * 100);
+      });
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -81,6 +86,7 @@ export default function HowItWorksTimeline() {
     return () => {
       observer.disconnect();
       window.removeEventListener('scroll', handleScroll);
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
     };
   }, []);
 

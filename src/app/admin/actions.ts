@@ -71,7 +71,7 @@ export async function saveBike(input: BikeInput): Promise<SaveResult> {
     const insertFields: Record<string, unknown> = { id: input.id, slug, ...fields };
     let { error } = await supabase.from('bikes').insert(insertFields);
     if (error && error.message.includes('new_arrival')) {
-      const { new_arrival: _, ...fallbackFields } = fields;
+      const { new_arrival: _new_arrival, ...fallbackFields } = fields;
       const res = await supabase.from('bikes').insert({ id: input.id, slug, ...fallbackFields });
       error = res.error;
     }
@@ -82,7 +82,7 @@ export async function saveBike(input: BikeInput): Promise<SaveResult> {
     slug = existing.slug;
     let { error } = await supabase.from('bikes').update(fields).eq('id', input.id);
     if (error && error.message.includes('new_arrival')) {
-      const { new_arrival: _, ...fallbackFields } = fields;
+      const { new_arrival: _new_arrival, ...fallbackFields } = fields;
       const res = await supabase.from('bikes').update(fallbackFields).eq('id', input.id);
       error = res.error;
     }

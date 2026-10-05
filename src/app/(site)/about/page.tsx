@@ -11,7 +11,6 @@ import {
   Flame,
   Handshake,
   MapPin,
-  MessageCircle,
   Phone,
   RefreshCw,
   Scale,

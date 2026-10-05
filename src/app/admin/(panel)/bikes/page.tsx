@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { EyeOff, Flame, Pencil, Star } from 'lucide-react';
+import { Flame, Star } from 'lucide-react';
 import { requireAdmin } from '@/lib/auth';
 import BikeRowActions from '@/components/admin/BikeRowActions';
 import StatusBadge from '@/components/StatusBadge';
@@ -16,7 +16,7 @@ export default async function AdminBikes() {
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <h1 className="text-2xl font-bold text-text-strong">Manage bikes</h1>
 
-        {/* Legend for action icons */}
+        {/* Legend for Star & Fire Icons */}
         <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 rounded-xl border border-border/80 bg-surface px-3.5 py-1.5 text-xs text-text-strong shadow-sm">
           <div className="flex items-center gap-1.5 font-medium">
             <Star size={14} className="fill-amber-400 text-amber-500 shrink-0" />
@@ -26,16 +26,6 @@ export default async function AdminBikes() {
           <div className="flex items-center gap-1.5 font-medium">
             <Flame size={14} className="fill-emerald-600 text-emerald-600 shrink-0" />
             <span><strong className="font-bold text-dark">Fire</strong> - New Arrival</span>
-          </div>
-          <span className="text-border/80 hidden sm:inline">•</span>
-          <div className="flex items-center gap-1.5 font-medium">
-            <Pencil size={14} className="text-primary shrink-0" />
-            <span><strong className="font-bold text-dark">Pencil</strong> - Edit Bike</span>
-          </div>
-          <span className="text-border/80 hidden sm:inline">•</span>
-          <div className="flex items-center gap-1.5 font-medium">
-            <EyeOff size={14} className="text-slate-500 shrink-0" />
-            <span><strong className="font-bold text-dark">Eye</strong> - Hide from listing</span>
           </div>
         </div>
 

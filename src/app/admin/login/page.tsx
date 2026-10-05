@@ -1,11 +1,10 @@
 'use client';
 import { Suspense, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Logo from '@/components/Logo';
 import { signInAdmin } from '@/app/admin/actions';
 
 function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const [error, setError] = useState(params.get('error') === 'forbidden' ? 'This account does not have admin access.' : '');
   const [busy, setBusy] = useState(false);

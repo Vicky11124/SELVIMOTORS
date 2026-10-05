@@ -3,7 +3,7 @@
 import { useState, useTransition, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { setLeadStatus, setBulkLeadStatus, deleteBulkLeads, deleteLead } from '@/app/admin/actions';
+import { setLeadStatus, setBulkLeadStatus, deleteBulkLeads } from '@/app/admin/actions';
 import { LEAD_STATUSES, type Enquiry, type LeadStatus } from '@/lib/types';
 import { formatDate } from '@/lib/utils';
 

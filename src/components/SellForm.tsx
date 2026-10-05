@@ -1438,7 +1438,7 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
         {/* Animated thin green line */}
         <div className="h-1 w-full bg-line overflow-hidden">
           <div
-            className="h-full bg-primary transition-[width] duration-400 ease-out shadow-[0_0_12px_rgba(14,59,46,0.3)]"
+            className="h-full bg-primary transition-[width] duration-[400ms] ease-out shadow-[0_0_12px_rgba(14,59,46,0.3)]"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -1467,7 +1467,7 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
         style={{
           height: containerHeight ? `${containerHeight}px` : 'auto',
         }}
-        className="relative overflow-hidden transition-[height] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        className="relative overflow-hidden transition-[height] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
       >
         <div className="relative w-full">
           {/* Exiting Step overlay during 400ms transition */}

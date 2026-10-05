@@ -10,7 +10,7 @@ const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     qualities: [75, 80, 85, 90, 95, 100],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1440, 1672, 1920],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1440, 1672, 1920, 2560, 3840],
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co', pathname: '/storage/v1/**' },
       { protocol: 'https', hostname: 'images.unsplash.com' },

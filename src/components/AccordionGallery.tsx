@@ -47,7 +47,7 @@ const DEFAULT_ITEMS: AccordionGalleryItem[] = [
 export default function AccordionGallery({
   items = DEFAULT_ITEMS,
   defaultIndex = 0,
-  height = 380,
+  height: _height = 380,
   autoPlay = true,
   autoPlayInterval = 3500,
   pauseOnHover = true,

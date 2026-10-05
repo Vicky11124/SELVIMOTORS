@@ -17,7 +17,7 @@ export default function ExpandableDescription({ description, className = '' }: P
   return (
     <div className={`mt-2.5 sm:mt-5 ${className}`}>
       <p
-        className={`text-xs sm:text-sm leading-relaxed text-white/80 whitespace-pre-line transition-all duration-200 ${
+        className={`text-xs sm:text-sm leading-relaxed text-black whitespace-pre-line transition-all duration-200 ${
           expanded ? '' : 'line-clamp-2 sm:line-clamp-none'
         }`}
       >

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import SpecularButton from '@/components/ui/SpecularButton';
@@ -8,17 +8,25 @@ import SpecularButton from '@/components/ui/SpecularButton';
 export default function HeroSection() {
   const [scrollY, setScrollY] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const rafId = useRef<number | null>(null);
 
   useEffect(() => {
     setLoaded(true);
     const handleScroll = () => {
-      // Only track scroll within hero height
-      if (window.scrollY < 800) {
-        setScrollY(window.scrollY);
-      }
+      // Guard: only schedule one rAF per scroll burst
+      if (rafId.current !== null) return;
+      rafId.current = requestAnimationFrame(() => {
+        rafId.current = null;
+        if (window.scrollY < 800) {
+          setScrollY(window.scrollY);
+        }
+      });
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+    };
   }, []);
 
   // Subtle parallax offsets
@@ -37,11 +45,12 @@ export default function HeroSection() {
           }}
         >
           <Image
-            src="/hero.jpeg"
+            src="/hero.png"
             alt="Selvi Motors Premium Pre-Owned Motorcycle"
             fill
             priority
-            unoptimized
+            quality={90}
+            sizes="100vw"
             className="object-cover object-[65%_center] sm:object-[60%_center]"
           />
         </div>
