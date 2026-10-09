@@ -161,7 +161,7 @@ export default function Header() {
       {/* Slide-in Drawer Container */}
       <aside
         aria-label="Mobile Navigation Menu"
-        className={`fixed top-0 right-0 bottom-0 h-full w-[82vw] max-w-[320px] bg-[#F7F2E8] border-l border-border shadow-2xl flex flex-col justify-between z-[100] md:hidden transform-gpu will-change-transform transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-y-auto ${open ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'
+        className={`fixed top-0 right-0 bottom-0 h-full w-[82vw] max-w-[320px] bg-surface border-l border-border shadow-2xl flex flex-col justify-between z-[100] md:hidden transform-gpu will-change-transform transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-y-auto ${open ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'
           }`}
       >
         {/* Subtle brand ambient glow in the drawer background */}
@@ -225,7 +225,7 @@ export default function Header() {
           style={{
             transitionDelay: open ? `${80 + NAV.length * 55}ms` : '0ms',
           }}
-          className={`relative z-10 p-5 pt-3 pb-8 border-t border-border bg-[#F7F2E8]/95 transform-gpu transition-all duration-[450ms] ease-[cubic-bezier(0.25,1,0.5,1)] ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+          className={`relative z-10 p-5 pt-3 pb-8 border-t border-border bg-surface/95 transform-gpu transition-all duration-[450ms] ease-[cubic-bezier(0.25,1,0.5,1)] ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
             }`}
         >
           <Link

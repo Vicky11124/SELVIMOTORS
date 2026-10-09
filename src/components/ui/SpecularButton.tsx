@@ -2,7 +2,6 @@
 
 import React, { type ReactNode, type MouseEventHandler, type CSSProperties } from 'react';
 import Link from 'next/link';
-import './SpecularButton.css';
 
 export interface SpecularButtonProps {
   children?: ReactNode;

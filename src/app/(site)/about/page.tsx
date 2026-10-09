@@ -129,7 +129,7 @@ export default async function AboutPage() {
         <div className="container-x">
           <div className="mx-auto max-w-4xl text-center">
             {/* Header Badge */}
-            <div className="animate-slide-left inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-wider text-cream uppercase sm:px-4 sm:py-1.5 sm:text-xs">
+            <div className="animate-slide-left inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-wider text-white uppercase sm:px-4 sm:py-1.5 sm:text-xs">
               <Sparkles className="h-2.5 w-2.5 text-accent sm:h-3.5 sm:w-3.5" />
               <span className="sm:hidden">About Selvi Motors • Saidapet</span>
               <span className="hidden sm:inline">About Selvi Motors • Saidapet, Chennai</span>
@@ -138,21 +138,21 @@ export default async function AboutPage() {
             {/* Main Headline */}
             <h1 className="animate-slide-left-delay-1 mt-2.5 text-2xl font-extrabold tracking-tight text-white xs:text-3xl sm:mt-6 sm:text-6xl sm:leading-[1.1]">
               BUILT AROUND BIKES.{' '}
-              <span className="block text-cream">
+              <span className="block text-emerald-300">
                 DRIVEN BY TRUST.
               </span>
             </h1>
 
             {/* Mobile summary */}
-            <p className="animate-slide-left-delay-2 mt-2 text-xs leading-relaxed text-cream/90 sm:hidden">
+            <p className="animate-slide-left-delay-2 mt-2 text-xs leading-relaxed text-white/90 sm:hidden">
               Selvi Motors is a pre-owned motorcycle dealership in Saidapet, Chennai. Wide selection of commuter, cruiser, and sports bikes with honest pricing & full RC transfer.
             </p>
 
             {/* Desktop detailed copy */}
-            <p className="animate-slide-left-delay-2 mt-6 hidden text-base leading-relaxed text-cream/90 sm:block sm:text-xl">
+            <p className="animate-slide-left-delay-2 mt-6 hidden text-base leading-relaxed text-white/90 sm:block sm:text-xl">
               Selvi Motors is a pre-owned motorcycle dealership based in Saidapet, Chennai, bringing riders a wide selection of quality used motorcycles across commuter, cruiser, performance, and sports segments.
             </p>
-            <p className="animate-slide-left-delay-3 mt-3 hidden text-sm leading-relaxed text-cream/80 sm:block sm:text-base">
+            <p className="animate-slide-left-delay-3 mt-3 hidden text-sm leading-relaxed text-white/80 sm:block sm:text-base">
               From your everyday ride to the bike you&apos;ve always wanted, we make the process of buying, selling, and exchanging a pre-owned motorcycle straightforward. With a strong presence in Chennai&apos;s used-bike market and a constantly changing collection, there&apos;s always something new to discover.
             </p>
 
@@ -255,7 +255,7 @@ export default async function AboutPage() {
               {BRANDS.map((brand) => (
                 <span
                   key={brand}
-                  className="rounded-md border border-line bg-cream px-2.5 py-1 text-[11px] font-medium text-dark shadow-sm sm:rounded-lg sm:px-3.5 sm:py-1.5 sm:text-xs"
+                  className="rounded-md border border-line bg-surface-muted px-2.5 py-1 text-[11px] font-medium text-dark shadow-xs sm:rounded-lg sm:px-3.5 sm:py-1.5 sm:text-xs"
                 >
                   {brand}
                 </span>
@@ -270,7 +270,7 @@ export default async function AboutPage() {
               return (
                 <div
                   key={idx}
-                  className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-line bg-cream p-3.5 transition duration-300 hover:border-primary/50 hover:bg-surface sm:p-5"
+                  className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-line bg-surface p-3.5 shadow-xs transition duration-300 hover:border-primary/50 hover:shadow-sm sm:p-5"
                 >
                   <div>
                     {/* Icon + Big Value */}
@@ -450,7 +450,7 @@ export default async function AboutPage() {
                 key={bike.id}
                 className="group min-w-[270px] max-w-[320px] shrink-0 snap-center overflow-hidden rounded-xl border border-line bg-surface transition duration-300 hover:border-primary/50 sm:min-w-0 sm:max-w-none sm:shrink sm:rounded-2xl shadow-sm"
               >
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-cream">
+                <div className="relative aspect-[16/10] w-full overflow-hidden bg-surface-muted">
                   <Image
                     src={img}
                     alt={title}
@@ -580,7 +580,7 @@ export default async function AboutPage() {
             className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent"
           />
 
-          <span className="text-[11px] font-bold tracking-widest text-cream uppercase sm:text-xs">
+          <span className="text-[11px] font-bold tracking-widest text-emerald-300 uppercase sm:text-xs">
             From Our Showroom To Your Road
           </span>
 
@@ -588,7 +588,7 @@ export default async function AboutPage() {
             YOUR NEXT BIKE IS WAITING.
           </h2>
 
-          <p className="mx-auto mt-2 max-w-2xl text-xs leading-relaxed text-cream/90 sm:mt-4 sm:text-base">
+          <p className="mx-auto mt-2 max-w-2xl text-xs leading-relaxed text-white/90 sm:mt-4 sm:text-base">
             Every motorcycle has a previous chapter. We help you find the one that&apos;s ready for yours. Browse our inventory or walk into our Saidapet showroom today.
           </p>
 

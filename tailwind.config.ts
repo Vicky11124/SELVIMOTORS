@@ -1,15 +1,21 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
-  content: ['./src/**/*.{ts,tsx}'],
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/lib/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
   theme: {
     extend: {
       colors: {
         // Semantic design tokens
-        background: '#F7F2E8',
+        background: '#FFFFFF',
         surface: '#FFFFFF',
-        'surface-muted': '#EFECE6',
-        border: '#E2DCD0',
+        'surface-muted': '#F9FAFB',
+        border: '#E5E7EB',
         primary: { DEFAULT: '#0E3B2E', dark: '#08261E' },
         accent: '#A67C52',
         text: '#263238',
@@ -21,10 +27,10 @@ const config: Config = {
         'selvi-red': { DEFAULT: '#E10600', dark: '#b80500' },
 
         // Compatibility & conversion tokens
-        ink: '#F7F2E8',
+        ink: '#FFFFFF',
         card: '#FFFFFF',
-        raised: '#EFECE6',
-        line: '#E2DCD0',
+        raised: '#F9FAFB',
+        line: '#E5E7EB',
         brand: { DEFAULT: '#0E3B2E', dark: '#08261E' },
         muted: '#526066',
       },

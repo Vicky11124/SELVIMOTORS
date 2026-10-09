@@ -55,7 +55,7 @@ export default async function BuyPage({ searchParams }: { searchParams: SP }) {
   return (
     <div className="relative min-h-screen">
       {/* Background ambient lighting */}
-      <div className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[500px] w-full max-w-7xl -translate-x-1/2 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(14,59,46,0.12),rgba(247,242,232,0))]" />
+      <div className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[500px] w-full max-w-7xl -translate-x-1/2 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(14,59,46,0.08),transparent)]" />
 
       <div className="container-x py-8 sm:py-14">
         {/* Centered Hero Header */}

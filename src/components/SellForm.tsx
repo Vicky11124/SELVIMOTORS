@@ -7,212 +7,167 @@ import {
   ArrowRight,
   Camera,
   Check,
+  CheckCircle2,
   ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Edit3,
   ImagePlus,
   Info,
   Loader2,
+  Lock,
   MapPin,
   MessageSquare,
+  Phone,
+  RotateCcw,
   Search,
   ShieldCheck,
+  Sparkles,
+  Trash2,
   User,
   X,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import SpecularButton from './ui/SpecularButton';
 import { submitSellRequest } from '@/app/actions';
 import {
   BIKE_BRANDS,
   CURRENT_YEAR,
   INDIAN_BIKE_CATALOG,
-  YEAR_OPTIONS,
 } from '@/lib/bikeData';
-import { formatFileSize, optimizeImageList } from '@/lib/imageOptimizer';
+import { optimizeImageList } from '@/lib/imageOptimizer';
 import { formatKm, formatPrice, WHATSAPP_NUMBER } from '@/lib/utils';
 
 const MAX_FILES = 10;
-const MIN_FILES = 3;
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'image/heic'];
 
-// Primary popular brands for Step 1
+// 4 Odometer range preset options
+const RANGE_OPTIONS = [
+  { label: '< 5,000', value: 3000, min: 0, max: 4999 },
+  { label: '5,000 – 10,000', value: 8000, min: 5000, max: 10000 },
+  { label: '10,000 – 20,000', value: 15000, min: 10001, max: 20000 },
+  { label: '20,000+', value: 25000, min: 20001, max: 999999 },
+];
+
+// Primary 5 popular brands for progressive display
 const POPULAR_BRANDS = [
   'Royal Enfield',
   'Yamaha',
   'KTM',
-  'Kawasaki',
   'Honda',
   'TVS',
   'Bajaj',
-  'Suzuki',
-  'Hero',
-  'BMW Motorrad',
 ];
 
-const POPULAR_YEARS = [2026, 2025, 2024, 2023, 2022, 2021, 2020];
-
-const KM_PRESETS = [
-  { label: '< 5,000 KM', value: 4000 },
-  { label: '5,000 – 10,000 KM', value: 8000 },
-  { label: '10,000 – 20,000 KM', value: 15000 },
-  { label: '20,000+ KM', value: 25000 },
-];
+const RECENT_YEARS = [2026, 2025, 2024, 2023, 2022, 2021, 2020];
 
 const CONDITIONS = [
   {
     value: 'Excellent',
     title: 'Excellent Condition',
-    desc: 'Like new, showroom condition, flawless engine & paint, zero issues.',
+    desc: 'Like new, showroom condition, flawless engine & paint, zero mechanical issues.',
   },
   {
     value: 'Good',
     title: 'Good Condition',
-    desc: 'Well maintained, normal usage wear, single owner, runs great.',
+    desc: 'Well maintained, normal usage wear, running smoothly without faults.',
   },
   {
     value: 'Fair',
     title: 'Fair Condition',
-    desc: 'Minor cosmetic scratches or upcoming scheduled service due.',
+    desc: 'Minor cosmetic scratches or scheduled maintenance due.',
   },
 ];
 
-const PRICE_PRESETS = [
-  { label: '₹80K', value: 80000 },
-  { label: '₹1.2L', value: 120000 },
-  { label: '₹1.5L', value: 150000 },
-  { label: '₹2L', value: 200000 },
-  { label: '₹3L', value: 300000 },
-  { label: '₹5L', value: 500000 },
+const OWNER_OPTIONS = [
+  { label: '1st Owner', value: '1st Owner' },
+  { label: '2nd Owner', value: '2nd Owner' },
+  { label: '3rd Owner', value: '3rd Owner' },
+  { label: '4+ Owners', value: '4+ Owners' },
 ];
 
-const PHOTO_GUIDE_ITEMS = [
-  { label: 'Front View', tip: 'Full bike headlamp & wheel' },
-  { label: 'Right Side', tip: 'Exhaust & engine view' },
-  { label: 'Left Side', tip: 'Chain & drive view' },
-  { label: 'Odometer', tip: 'Clear KM reading' },
-  { label: 'Rear View', tip: 'Tail lamp & tyre' },
+const SERVICE_HISTORY_OPTIONS = [
+  { label: 'Brand Authorized Service', value: 'Brand Authorized Service' },
+  { label: 'Regular Local Garage', value: 'Regular Local Garage' },
+  { label: 'Mixed / Self Maintained', value: 'Mixed / Self Maintained' },
 ];
 
-const QUICK_CITIES = ['Chennai', 'Coimbatore', 'Madurai', 'Salem', 'Trichy', 'Vellore'];
+const RECOMMENDED_SLOTS = [
+  { id: 'front', label: 'Front View', tip: 'Headlamp & wheel' },
+  { id: 'rear', label: 'Rear View', tip: 'Tail lamp & plate' },
+  { id: 'left', label: 'Left Side', tip: 'Chain & drive' },
+  { id: 'right', label: 'Right Side', tip: 'Exhaust & engine' },
+  { id: 'odometer', label: 'Odometer', tip: 'KM reading' },
+];
+
+const TOTAL_STEPS = 8;
 
 interface SellPhoto {
   file: File;
   previewUrl: string;
   size: number;
+  slot?: string;
 }
 
-export default function SellForm({ brands: _brands }: { brands: string[] }) {
-  // 6-step progressive journey
-  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
-  const [exitingStep, setExitingStep] = useState<number | null>(null);
-  const [direction, setDirection] = useState<number>(1);
-  const [containerHeight, setContainerHeight] = useState<number | null>(null);
+interface SellFormProps {
+  brands: string[];
+  initialRegNumber?: string;
+  onExit?: () => void;
+}
 
-  // Form states
+export default function SellForm({
+  brands: _brands,
+  initialRegNumber = '',
+  onExit,
+}: SellFormProps) {
+  // 8-step progressive journey:
+  // 1: Brand | 2: Model | 3: Year | 4: Kilometres | 5: Condition & Price | 6: Photos | 7: Contact | 8: Review
+  const [step, setStep] = useState<number>(1);
+  const [direction, setDirection] = useState<number>(1);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Form values
+  const [regNumber, setRegNumber] = useState(initialRegNumber);
+
+  // Step 1: Brand
   const [brand, setBrand] = useState('Royal Enfield');
   const [brandSearch, setBrandSearch] = useState('');
   const [showAllBrands, setShowAllBrands] = useState(false);
 
+  // Step 2: Model
   const [model, setModel] = useState('Hunter 350');
   const [modelSearch, setModelSearch] = useState('');
+  const [showAllModels, setShowAllModels] = useState(false);
   const [customModel, setCustomModel] = useState('');
   const [isTypingCustomModel, setIsTypingCustomModel] = useState(false);
 
+  // Step 3: Year
   const [year, setYear] = useState<number>(2023);
-  const [km, setKm] = useState<number | string>(8000);
+  const [isOlderYearSelect, setIsOlderYearSelect] = useState(false);
 
+  // Step 4: Kilometres
+  const [km, setKm] = useState<number | string>(0);
+
+  // Step 5: Condition & Price
   const [condition, setCondition] = useState('Excellent');
+  const [owners, setOwners] = useState('1st Owner');
+  const [serviceHistory, setServiceHistory] = useState('Brand Authorized Service');
   const [expectedPrice, setExpectedPrice] = useState<number | string>(150000);
   const [openToOffer, setOpenToOffer] = useState(false);
-  const [description, setDescription] = useState('');
+  const [notes, setNotes] = useState('');
 
+  // Step 6: Photos
   const [photos, setPhotos] = useState<SellPhoto[]>([]);
+  const [activeSlotUpload, setActiveSlotUpload] = useState<string | null>(null);
 
+  // Step 7: Contact
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [location, setLocation] = useState('Chennai');
-  const [isOlderYearOpen, setIsOlderYearOpen] = useState(false);
-  
-  const olderYearRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLDivElement>(null);
-  const activeStepRef = useRef<HTMLDivElement>(null);
-  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const isInitialMount = useRef(true);
+  const [sameWhatsapp, setSameWhatsapp] = useState(true);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [pincode, setPincode] = useState('');
 
-  // Smooth step transition handler
-  function changeStep(nextStep: 1 | 2 | 3 | 4 | 5 | 6, dir?: number) {
-    if (nextStep === step) return;
-    const newDir = dir ?? (nextStep > step ? 1 : -1);
-    setDirection(newDir);
-    setExitingStep(step);
-    setStep(nextStep);
-
-    if (transitionTimerRef.current) {
-      clearTimeout(transitionTimerRef.current);
-    }
-    transitionTimerRef.current = setTimeout(() => {
-      setExitingStep(null);
-    }, 400);
-  }
-
-  // Close older year popover on click outside
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (olderYearRef.current && !olderYearRef.current.contains(e.target as Node)) {
-        setIsOlderYearOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Cleanup transition timers on unmount
-  useEffect(() => {
-    return () => {
-      if (transitionTimerRef.current) {
-        clearTimeout(transitionTimerRef.current);
-      }
-    };
-  }, []);
-
-  // Measured height container observation
-  useEffect(() => {
-    const el = activeStepRef.current;
-    if (!el) return;
-
-    const updateHeight = () => {
-      const h = el.getBoundingClientRect().height;
-      if (h > 0) {
-        setContainerHeight(Math.round(h));
-      }
-    };
-
-    updateHeight();
-
-    const observer = new ResizeObserver(() => {
-      updateHeight();
-    });
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [step, brandSearch, showAllBrands, modelSearch, isTypingCustomModel, photos, isOlderYearOpen]);
-
-  // Adjust scroll position gently if form top has scrolled off above screen
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-    if (formRef.current) {
-      const rect = formRef.current.getBoundingClientRect();
-      if (rect.top < -40) {
-        const yOffset = -20;
-        const y = window.pageYOffset + rect.top + yOffset;
-        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
-      }
-    }
-  }, [step]);
-
-  // Async states
+  // Async & UI states
   const [optimizing, setOptimizing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -224,13 +179,25 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
     year: number;
     km: number;
     expectedPrice: number | null;
-    location: string;
+    pincode: string;
     photosCount: number;
+    regNumber?: string;
   } | null>(null);
 
+  const formCardRef = useRef<HTMLDivElement>(null);
+  const stepContentRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialMount = useRef(true);
 
-  // Filtered brand list
+  // Sync initialRegNumber
+  useEffect(() => {
+    if (initialRegNumber) {
+      setRegNumber(initialRegNumber);
+    }
+  }, [initialRegNumber]);
+
+  // Filtered brands list
   const filteredBrands = useMemo(() => {
     if (brandSearch.trim()) {
       const q = brandSearch.toLowerCase();
@@ -239,77 +206,101 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
     return showAllBrands ? BIKE_BRANDS : POPULAR_BRANDS;
   }, [brandSearch, showAllBrands]);
 
-  // Available models for current brand
+  // Available models for selected brand
   const allBrandModels = useMemo(() => {
     return INDIAN_BIKE_CATALOG[brand] || ['Other Model'];
   }, [brand]);
 
   const filteredModels = useMemo(() => {
-    if (!modelSearch.trim()) return allBrandModels;
-    const q = modelSearch.toLowerCase();
-    return allBrandModels.filter((m) => m.toLowerCase().includes(q));
-  }, [allBrandModels, modelSearch]);
-
-  // Brand selection handler (auto-advances immediately to model selection)
-  function handleSelectBrand(newBrand: string) {
-    setBrand(newBrand);
-    setIsTypingCustomModel(false);
-    setCustomModel('');
-    setModelSearch('');
-    const models = INDIAN_BIKE_CATALOG[newBrand] || ['Other Model'];
-    setModel(models[0] || 'Other Model');
-    setError('');
-    changeStep(2, 1);
-  }
-
-  // Model selection handler (auto-advances immediately to year & km)
-  function handleSelectModel(newModel: string) {
-    if (newModel === '__custom__') {
-      setIsTypingCustomModel(true);
-      setModel('');
-    } else {
-      setIsTypingCustomModel(false);
-      setModel(newModel);
-      setError('');
-      changeStep(3, 1);
+    if (modelSearch.trim()) {
+      const q = modelSearch.toLowerCase();
+      return allBrandModels.filter((m) => m.toLowerCase().includes(q));
     }
+    return showAllModels ? allBrandModels : allBrandModels.slice(0, 6);
+  }, [allBrandModels, modelSearch, showAllModels]);
+
+  // Smooth step transition handler
+  function changeStep(nextStep: number, dir?: number) {
+    if (nextStep === step || nextStep < 1 || nextStep > TOTAL_STEPS) return;
+    const newDir = dir ?? (nextStep > step ? 1 : -1);
+    setDirection(newDir);
+    setIsTransitioning(true);
+    setError('');
+
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+
+    setStep(nextStep);
+
+    transitionTimerRef.current = setTimeout(() => {
+      setIsTransitioning(false);
+    }, 400);
   }
+
+  // Scroll smoothly when changing step
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (formCardRef.current) {
+      const rect = formCardRef.current.getBoundingClientRect();
+      if (rect.top < -20) {
+        const y = window.pageYOffset + rect.top - 20;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+      }
+    }
+  }, [step]);
 
   // Cleanup blob URLs on unmount
   useEffect(() => {
     return () => {
       photos.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     };
   }, [photos]);
 
+  // Brand selection handler
+  function handleSelectBrand(newBrand: string) {
+    setBrand(newBrand);
+    setIsTypingCustomModel(false);
+    setCustomModel('');
+    setModelSearch('');
+    setShowAllModels(false);
+    const models = INDIAN_BIKE_CATALOG[newBrand] || ['Other Model'];
+    setModel(models[0] || 'Other Model');
+    setError('');
+  }
+
   // Photo handlers
-  async function handleAddFiles(list: FileList | null) {
+  async function handleAddFiles(list: FileList | null, slotId?: string) {
     if (!list || list.length === 0) return;
     setError('');
     setOptimizing(true);
 
-    const slots = MAX_FILES - photos.length;
-    if (slots <= 0) {
+    const slotsAvailable = MAX_FILES - photos.length;
+    if (slotsAvailable <= 0) {
       setError(`Maximum ${MAX_FILES} photos allowed.`);
       setOptimizing(false);
       return;
     }
 
-    const filesToConvert = Array.from(list).slice(0, slots);
+    const filesToConvert = Array.from(list).slice(0, slotsAvailable);
 
     try {
       const results = await optimizeImageList(filesToConvert, 1600, 1200, 0.82);
-      const newItems: SellPhoto[] = results.map((r) => ({
+      const newItems: SellPhoto[] = results.map((r, i) => ({
         file: r.file,
         previewUrl: URL.createObjectURL(r.file),
         size: r.optimizedSize,
+        slot: i === 0 && slotId ? slotId : undefined,
       }));
 
       setPhotos((prev) => [...prev, ...newItems]);
     } catch {
-      setError('Could not process some photos. Please try another image.');
+      setError('Could not optimize some photos. Please try another image.');
     } finally {
       setOptimizing(false);
+      setActiveSlotUpload(null);
     }
   }
 
@@ -321,17 +312,7 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
     });
   }
 
-  function makeCover(index: number) {
-    if (index === 0) return;
-    setPhotos((prev) => {
-      const copy = [...prev];
-      const [chosen] = copy.splice(index, 1);
-      if (chosen) copy.unshift(chosen);
-      return copy;
-    });
-  }
-
-  // Validation per step
+  // Step validation
   function validateStep(targetStep: number): boolean {
     setError('');
 
@@ -355,35 +336,46 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
         setError('Please select a valid registration year.');
         return false;
       }
+    }
+
+    if (targetStep === 4) {
       const kmNum = Number(km);
-      if (isNaN(kmNum) || kmNum < 0) {
-        setError('Please enter the distance covered in KM.');
+      if (isNaN(kmNum) || kmNum < 0 || km === '') {
+        setError('Please enter the total kilometres driven.');
         return false;
       }
     }
 
-    if (targetStep === 4) {
+    if (targetStep === 5) {
       if (!condition) {
         setError('Please select the overall condition of your bike.');
         return false;
       }
-      if (!openToOffer && expectedPrice !== '') {
+      if (!owners) {
+        setError('Please select the number of owners.');
+        return false;
+      }
+      if (!serviceHistory) {
+        setError('Please select the service history.');
+        return false;
+      }
+      if (!openToOffer) {
         const p = Number(expectedPrice);
-        if (isNaN(p) || p < 0) {
-          setError('Please enter a valid expected price.');
+        if (!expectedPrice || isNaN(p) || p <= 0) {
+          setError('Please enter your expected selling price or select open to valuation.');
           return false;
         }
       }
     }
 
-    if (targetStep === 5) {
-      if (photos.length < MIN_FILES) {
-        setError(`Please upload at least ${MIN_FILES} photos (${photos.length}/${MIN_FILES} added). Clear photos get higher valuation!`);
+    if (targetStep === 6) {
+      if (photos.length === 0) {
+        setError('Please upload at least 1 photo of your motorcycle to proceed.');
         return false;
       }
     }
 
-    if (targetStep === 6) {
+    if (targetStep === 7) {
       if (!name.trim()) {
         setError('Please enter your full name.');
         return false;
@@ -393,8 +385,24 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
         setError('Please enter a valid 10-digit mobile number.');
         return false;
       }
-      if (!location.trim()) {
-        setError('Please select or enter your city.');
+      if (!sameWhatsapp && whatsappNumber.trim()) {
+        const cleanWa = whatsappNumber.trim().replace(/[\s-]/g, '');
+        if (!/^[+\d][\d]{7,14}$/.test(cleanWa)) {
+          setError('Please enter a valid WhatsApp number or keep same as mobile.');
+          return false;
+        }
+      }
+      if (!sameWhatsapp && !whatsappNumber.trim()) {
+        setError('Please enter your WhatsApp number.');
+        return false;
+      }
+      const cleanPin = pincode.trim();
+      if (!cleanPin || !/^\d{6}$/.test(cleanPin)) {
+        setError('Please enter a valid 6-digit Pincode (e.g. 600001).');
+        return false;
+      }
+      if (email.trim() && !/^\S+@\S+\.\S+$/.test(email.trim())) {
+        setError('Please enter a valid email address.');
         return false;
       }
     }
@@ -404,8 +412,8 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
 
   function goNext() {
     if (validateStep(step)) {
-      if (step < 6) {
-        changeStep((step + 1) as 1 | 2 | 3 | 4 | 5 | 6, 1);
+      if (step < TOTAL_STEPS) {
+        changeStep(step + 1, 1);
       }
     }
   }
@@ -413,13 +421,15 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
   function goBack() {
     setError('');
     if (step > 1) {
-      changeStep((step - 1) as 1 | 2 | 3 | 4 | 5 | 6, -1);
+      changeStep(step - 1, -1);
+    } else if (onExit) {
+      onExit();
     }
   }
 
   // Final submission to Supabase
   async function handleSubmit() {
-    if (!validateStep(1) || !validateStep(2) || !validateStep(3) || !validateStep(4) || !validateStep(5) || !validateStep(6)) {
+    if (!validateStep(1) || !validateStep(2) || !validateStep(3) || !validateStep(4) || !validateStep(5) || !validateStep(6) || !validateStep(7)) {
       return;
     }
 
@@ -435,7 +445,7 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
       const supabase = createClient();
       const paths: string[] = [];
 
-      // Upload WebP photos to existing Supabase Storage
+      // Upload photos to Supabase Storage if present
       for (const item of photos) {
         const path = `${uploadId}/${crypto.randomUUID()}.webp`;
         const { error: upErr } = await supabase.storage.from('sell-photos').upload(path, item.file, {
@@ -445,15 +455,18 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
         paths.push(path);
       }
 
-      // Format clean description
-      const fullDesc = [
-        `City: ${location.trim()}`,
+      // Format descriptive summary
+      const descParts = [
+        regNumber.trim() ? `Reg Number: ${regNumber.trim()}` : '',
+        `Pincode: ${pincode.trim()}`,
         `Condition: ${condition}`,
+        `Owners: ${owners}`,
+        `Service: ${serviceHistory}`,
+        !sameWhatsapp && whatsappNumber.trim() ? `WhatsApp: ${whatsappNumber.trim()}` : '',
+        email.trim() ? `Email: ${email.trim()}` : '',
         openToOffer ? 'Expected Price: Open to Selvi Motors evaluation' : '',
-        description.trim() ? `Notes: ${description.trim()}` : '',
-      ]
-        .filter(Boolean)
-        .join(' | ');
+        notes.trim() ? `Notes: ${notes.trim()}` : '',
+      ].filter(Boolean);
 
       const res = await submitSellRequest({
         name: name.trim(),
@@ -463,7 +476,7 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
         year: Number(year),
         km: Math.round(finalKm),
         expectedPrice: finalPrice,
-        description: fullDesc,
+        description: descParts.join(' | '),
         photos: paths,
         uploadId,
       });
@@ -477,8 +490,9 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
         year: Number(year),
         km: Math.round(finalKm),
         expectedPrice: finalPrice,
-        location: location.trim(),
+        pincode: pincode.trim(),
         photosCount: photos.length,
+        regNumber: regNumber.trim() || undefined,
       });
 
       setDone(true);
@@ -486,7 +500,7 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
       setError(
         err instanceof Error
           ? err.message
-          : 'Something went wrong while submitting. Please try again or WhatsApp us.'
+          : 'Something went wrong while submitting. Please try again or reach out on WhatsApp.'
       );
     } finally {
       setBusy(false);
@@ -496,76 +510,104 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
   const currentModelName = isTypingCustomModel ? customModel || 'Custom Model' : model;
 
   // ──────────────────────────────────────────────────────────
-  // SUCCESS SCREEN
+  // SUCCESS / CONFIRMATION RECEIPT
   // ──────────────────────────────────────────────────────────
   if (done && submittedData) {
-    const waText = `Hi Selvi Motors, I just submitted my ${submittedData.brand} ${submittedData.model} (${submittedData.year}, ${submittedData.km.toLocaleString('en-IN')} KM) from ${submittedData.location} for evaluation. My name is ${submittedData.name}.`;
+    const waText = `Hi Selvi Motors, I just requested a valuation for my ${submittedData.brand} ${submittedData.model} (${submittedData.year}, ${submittedData.km.toLocaleString('en-IN')} KM)${submittedData.regNumber ? ` [${submittedData.regNumber}]` : ''} from Pincode ${submittedData.pincode}. My name is ${submittedData.name}.`;
     const waUrl = `https://wa.me/${WHATSAPP_NUMBER || '918124555343'}?text=${encodeURIComponent(waText)}`;
 
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-line bg-surface p-6 text-center shadow-xl sm:p-10">
-        <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+      <div className="relative overflow-hidden rounded-3xl border border-border/80 bg-surface p-6 sm:p-10 shadow-2xl text-center">
+        {/* Ambient background glow */}
+        <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 
         <div className="relative z-10 mx-auto max-w-lg">
-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary/40 bg-primary/10 text-primary shadow-lg shadow-primary/10 animate-in zoom-in-75 duration-300">
-            <Check size={38} strokeWidth={3} />
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/10 text-primary shadow-xl shadow-primary/10 animate-in zoom-in-75 duration-300">
+            <Check size={40} strokeWidth={3} />
           </div>
 
-          <span className="inline-block rounded-full bg-primary/10 border border-primary/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary">
-            Request Received
-          </span>
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary mb-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            VALUATION REQUEST RECEIVED
+          </div>
 
-          <h2 className="mt-3 font-display text-2xl font-extrabold uppercase tracking-tight text-dark sm:text-3xl">
+          <h2 className="font-display text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-text-strong">
             Thanks, {submittedData.name}.
           </h2>
-          <p className="mt-2 text-sm text-slate">
-            Our team will review your bike details and contact you shortly with a verified valuation.
+          <p className="mt-2 text-xs sm:text-sm text-text/80 leading-relaxed font-medium">
+            Our Selvi Motors team will review your bike details and contact you shortly with a verified valuation.
           </p>
 
-          {/* Submitted summary card */}
-          <div className="mt-6 rounded-xl border border-line bg-cream p-4 text-left sm:p-5">
-            <div className="flex items-center justify-between border-b border-line pb-2.5 text-xs">
-              <span className="font-bold text-dark">Valuation Summary</span>
-              <span className="text-primary font-semibold">{submittedData.location}</span>
+          {/* 3 Reassurance bullets */}
+          <div className="mt-5 inline-flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs font-semibold text-text-strong bg-background/80 border border-border/80 rounded-xl py-2.5 px-4">
+            <span className="inline-flex items-center gap-1 text-primary">
+              <CheckCircle2 size={14} /> Request received
+            </span>
+            <span className="hidden sm:inline text-border">•</span>
+            <span className="inline-flex items-center gap-1 text-primary">
+              <CheckCircle2 size={14} /> Details securely submitted
+            </span>
+            <span className="hidden sm:inline text-border">•</span>
+            <span className="inline-flex items-center gap-1 text-primary">
+              <CheckCircle2 size={14} /> Our team will contact you
+            </span>
+          </div>
+
+          {/* Summary receipt card */}
+          <div className="mt-6 rounded-2xl border border-border/90 bg-background p-4 sm:p-5 text-left shadow-sm">
+            <div className="flex items-center justify-between border-b border-border/80 pb-2.5 text-xs">
+              <span className="font-display font-bold uppercase tracking-wide text-text-strong">
+                Valuation Summary
+              </span>
+              <span className="font-bold text-primary">PIN: {submittedData.pincode}</span>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
               <div>
-                <span className="text-slate/70">Motorcycle</span>
-                <p className="font-bold text-dark text-sm mt-0.5">
+                <span className="text-text/60 font-medium">Motorcycle</span>
+                <p className="font-display font-bold text-text-strong text-sm mt-0.5">
                   {submittedData.brand} {submittedData.model}
+                </p>
+                {submittedData.regNumber && (
+                  <span className="inline-block mt-0.5 font-mono text-[10px] font-bold bg-surface px-1.5 py-0.5 rounded border border-border text-text-strong">
+                    {submittedData.regNumber}
+                  </span>
+                )}
+              </div>
+              <div>
+                <span className="text-text/60 font-medium">Registration Year</span>
+                <p className="font-display font-bold text-text-strong text-sm mt-0.5">
+                  {submittedData.year}
                 </p>
               </div>
               <div>
-                <span className="text-slate/70">Registration Year</span>
-                <p className="font-bold text-dark text-sm mt-0.5">{submittedData.year}</p>
+                <span className="text-text/60 font-medium">KM Driven</span>
+                <p className="font-display font-bold text-text-strong text-sm mt-0.5">
+                  {formatKm(submittedData.km)}
+                </p>
               </div>
               <div>
-                <span className="text-slate/70">KM Driven</span>
-                <p className="font-bold text-dark text-sm mt-0.5">{formatKm(submittedData.km)}</p>
-              </div>
-              <div>
-                <span className="text-slate/70">Expected Price</span>
-                <p className="font-bold text-primary text-sm mt-0.5">
-                  {submittedData.expectedPrice ? formatPrice(submittedData.expectedPrice) : 'Open to offer'}
+                <span className="text-text/60 font-medium">Expected Price</span>
+                <p className="font-display font-bold text-primary text-sm mt-0.5">
+                  {submittedData.expectedPrice ? formatPrice(submittedData.expectedPrice) : 'Open to evaluation'}
                 </p>
               </div>
             </div>
           </div>
 
           {/* CTAs */}
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
             <a
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-[#25D366]/20 transition-all hover:bg-[#20bd5a] active:scale-95"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-[#25D366]/20 transition-all hover:bg-[#20bd5a] active:scale-95"
             >
               <MessageSquare size={16} />
-              WhatsApp Selvi Motors
+              Chat on WhatsApp
             </a>
             <Link
               href="/buy"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-surface px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-dark transition-all hover:bg-cream active:scale-95"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-surface px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-text-strong transition-all hover:bg-background active:scale-95"
             >
               Browse Inventory
             </Link>
@@ -579,9 +621,13 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
               setPhotos([]);
               setName('');
               setPhone('');
+              setRegNumber('');
+              setKm(0);
+              setNotes('');
             }}
-            className="mt-6 text-xs text-slate hover:text-primary underline"
+            className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-text/70 hover:text-primary transition-colors underline"
           >
+            <RotateCcw size={13} />
             Submit another motorcycle valuation
           </button>
         </div>
@@ -589,45 +635,337 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
     );
   }
 
-  // Step Content Renderer
-  function renderStepContent(stepNum: number) {
-    switch (stepNum) {
-      case 1:
-        return (
-          <div className="space-y-3 sm:space-y-6">
-            <div>
-              <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-dark sm:text-3xl">
-                What bike are you selling?
-              </h2>
-              <p className="mt-0.5 text-[11px] sm:text-sm text-slate">
-                Select your motorcycle brand to get started with your free valuation.
-              </p>
+  // ──────────────────────────────────────────────────────────
+  // STEP 4: CINEMATIC MOTORCYCLE ODOMETER VIEW (1:1 Reference Match)
+  // ──────────────────────────────────────────────────────────
+  if (step === 4) {
+    const kmNumber = typeof km === 'number' ? km : Number(km) || 0;
+    const kmString = String(Math.max(0, Math.min(999999, Math.round(kmNumber))))
+      .padStart(6, '0')
+      .slice(-6);
+    const kmDigits = kmString.split('');
+    const firstNonZero = kmDigits.findIndex((d) => d !== '0');
+    const activeHighlightIndex = firstNonZero === -1 ? 5 : firstNonZero;
+
+    const activeRangeIndex = RANGE_OPTIONS.findIndex(
+      (r) => kmNumber >= r.min && kmNumber <= r.max
+    );
+
+    const handleStepUp = () => {
+      const current = typeof km === 'number' ? km : Number(km) || 0;
+      setKm(Math.min(999999, current + 1000));
+    };
+
+    const handleStepDown = () => {
+      const current = typeof km === 'number' ? km : Number(km) || 0;
+      setKm(Math.max(0, current - 1000));
+    };
+
+    return (
+      <div className="space-y-2 sm:space-y-4 overflow-x-clip" ref={formCardRef}>
+        {/* ── Main Form Container for Step 4 ── */}
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-[#1e2e28] bg-[#07130F] shadow-2xl text-white">
+          {/* Subtle top rim beam in mint */}
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#8FE3C1]/10 via-[#8FE3C1]/40 to-[#8FE3C1]/10 z-20" />
+
+          <div className="relative min-h-[480px] sm:min-h-[520px] lg:min-h-[560px] flex flex-col lg:flex-row items-stretch justify-between">
+            {/* RIGHT MOTORCYCLE INSTRUMENT CLUSTER (Group 2 - Animate Right) */}
+            <div className="lg:absolute lg:right-0 lg:top-0 lg:bottom-0 lg:w-[45%] w-full h-48 sm:h-64 lg:h-full pointer-events-none overflow-hidden animate-hero-right z-0">
+              <div className="relative w-full h-full">
+                <img
+                  src="/images/sell/odometer-cockpit.jpg"
+                  alt="Motorcycle Cockpit Instrument Cluster"
+                  className="w-full h-full object-cover object-center lg:object-left-center"
+                />
+                {/* Seamless dark vignette gradient blending into left content */}
+                <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-[#07130F] via-[#07130F]/40 to-transparent" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,#07130F_90%)] opacity-50" />
+              </div>
             </div>
 
-            {/* Searchable Brand Selector */}
-            <div className="relative max-w-md">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate/60" />
-              <input
-                type="text"
-                value={brandSearch}
-                onChange={(e) => setBrandSearch(e.target.value)}
-                placeholder="Search brand (e.g. Royal Enfield, Yamaha)..."
-                className="w-full rounded-xl border border-line bg-cream py-2 pl-8 pr-3 text-xs text-dark placeholder:text-slate/60 focus:border-primary focus:outline-none"
-              />
-              {brandSearch && (
+            {/* LEFT INTERACTIVE CONTENT GROUP (Group 1 - Animate Left) */}
+            <div className="relative z-10 w-full lg:w-[58%] p-4 sm:p-8 lg:p-10 flex flex-col justify-between space-y-4 sm:space-y-6 animate-hero-left">
+              {/* TOP LEFT: STEP 4 OF 5 & THIN PROGRESS BAR */}
+              <div>
+                <div className="font-display font-extrabold uppercase tracking-widest text-[11px] sm:text-xs text-[#AEB8B3]">
+                  STEP 4 OF 5
+                </div>
+                <div className="mt-1.5 h-1 w-32 sm:w-44 overflow-hidden rounded-full bg-[#182621]">
+                  <div className="h-full rounded-full bg-[#8FE3C1]" style={{ width: '65%' }} />
+                </div>
+              </div>
+
+              {/* MAIN EDITORIAL HEADLINE */}
+              <div>
+                <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold uppercase tracking-tight text-white leading-[1.08]">
+                  HOW FAR HAS IT<br />
+                  <span className="text-[#8FE3C1]">TRAVELLED?</span>
+                </h2>
+                <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-[#AEB8B3] font-medium leading-relaxed">
+                  Enter the current odometer reading of your bike.
+                </p>
+              </div>
+
+              {/* MECHANICAL 6-DIGIT ODOMETER HOUSING */}
+              <div className="relative inline-flex max-w-full items-center justify-between gap-2 sm:gap-3 rounded-2xl border border-[#3e4644]/80 bg-gradient-to-b from-[#242b28] via-[#151b19] to-[#0d1210] p-2 sm:p-3 shadow-[0_12px_28px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.15)]">
+                {/* 6 Mechanical Digit Windows */}
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  {kmDigits.map((digit, idx) => {
+                    const isHighlighted = idx >= activeHighlightIndex;
+                    const isKeyLead = idx === activeHighlightIndex;
+                    return (
+                      <div
+                        key={idx}
+                        className={`relative flex h-11 w-8 sm:h-14 sm:w-11 md:h-16 md:w-12 items-center justify-center overflow-hidden rounded-lg border bg-gradient-to-b from-[#0a0f0d] via-[#1a221f] to-[#0a0f0d] shadow-[inset_0_3px_6px_rgba(0,0,0,0.9),inset_0_-3px_6px_rgba(0,0,0,0.9)] select-none transition-colors ${
+                          isKeyLead
+                            ? 'border-[#C8A878]/70 shadow-[0_0_12px_rgba(200,168,120,0.25),inset_0_3px_6px_rgba(0,0,0,0.9)]'
+                            : 'border-[#2e3734]'
+                        }`}
+                      >
+                        {/* Mechanical tumbler horizontal seam line */}
+                        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-[1px] -translate-y-1/2 bg-black/60 shadow-[0_1px_1px_rgba(255,255,255,0.08)]" />
+                        <div className="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-gradient-to-b from-black/60 to-transparent" />
+                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-t from-black/60 to-transparent" />
+
+                        {/* Digit Character */}
+                        <span
+                          className={`relative z-10 font-mono text-xl sm:text-2xl md:text-3xl font-black tracking-tight ${
+                            isKeyLead
+                              ? 'text-[#F7E5C8] drop-shadow-[0_0_8px_rgba(247,229,200,0.4)]'
+                              : isHighlighted
+                              ? 'text-[#F7F2E8]'
+                              : 'text-[#4e5854]'
+                          }`}
+                        >
+                          {digit}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* KM Label */}
+                <div className="px-1 sm:px-2 font-display text-sm sm:text-base md:text-lg font-black tracking-widest text-[#AEB8B3] select-none">
+                  KM
+                </div>
+
+                {/* Stepper Buttons (Increment / Decrement by 1,000) */}
+                <div className="flex flex-col items-center justify-center rounded-lg border border-[#2e3734] bg-[#0c1210] p-0.5 sm:p-1 gap-0.5 z-20">
+                  <button
+                    type="button"
+                    onClick={handleStepUp}
+                    aria-label="Increase by 1,000 KM"
+                    className="flex h-5 w-6 sm:h-6 sm:w-7 items-center justify-center rounded text-[#AEB8B3] hover:text-white hover:bg-white/10 transition-all active:scale-90"
+                  >
+                    <ChevronUp size={16} strokeWidth={2.5} />
+                  </button>
+                  <div className="h-[1px] w-full bg-[#2e3734]" />
+                  <button
+                    type="button"
+                    onClick={handleStepDown}
+                    aria-label="Decrease by 1,000 KM"
+                    className="flex h-5 w-6 sm:h-6 sm:w-7 items-center justify-center rounded text-[#AEB8B3] hover:text-white hover:bg-white/10 transition-all active:scale-90"
+                  >
+                    <ChevronDown size={16} strokeWidth={2.5} />
+                  </button>
+                </div>
+
+                {/* Hidden accessible number input for typing exact value */}
+                <input
+                  type="number"
+                  value={km === '' ? '' : km}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      setKm('');
+                    } else {
+                      const num = Number(val);
+                      if (!isNaN(num) && num >= 0 && num <= 999999) {
+                        setKm(num);
+                      }
+                    }
+                  }}
+                  className="absolute inset-0 z-10 h-full w-full opacity-0 cursor-pointer"
+                  title="Click to enter exact kilometres"
+                />
+              </div>
+
+              {/* MANUAL EXACT INPUT FIELD */}
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-[#273530] bg-[#0c1512]/90 px-3.5 py-2.5 shadow-inner focus-within:border-[#8FE3C1] focus-within:ring-1 focus-within:ring-[#8FE3C1]/30 transition-all">
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#AEB8B3] shrink-0">
+                    Exact KM:
+                  </span>
+                  <input
+                    type="number"
+                    value={km === '' ? '' : km}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setKm('');
+                      } else {
+                        const num = Number(val);
+                        if (!isNaN(num) && num >= 0 && num <= 999999) {
+                          setKm(num);
+                        }
+                      }
+                    }}
+                    placeholder="Type reading (e.g. 8000)"
+                    className="w-full bg-transparent font-mono text-sm sm:text-base font-extrabold text-white placeholder:text-[#AEB8B3]/35 focus:outline-none"
+                  />
+                </div>
+                <span className="font-display font-black text-xs text-[#8FE3C1] shrink-0">
+                  KM
+                </span>
+              </div>
+
+              {/* 4 RANGE PRESET BUTTONS */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {RANGE_OPTIONS.map((opt, idx) => {
+                  const isSelected = activeRangeIndex === idx;
+                  return (
+                    <button
+                      key={opt.label}
+                      type="button"
+                      onClick={() => setKm(opt.value)}
+                      className={`rounded-xl border px-3 py-2 text-center text-xs font-bold transition-all active:scale-95 ${
+                        isSelected
+                          ? 'border-[#8FE3C1]/50 bg-[#0E3B2E] text-white ring-1 ring-[#8FE3C1]/30 shadow-sm'
+                          : 'border-[#273530] bg-[#0c1512]/60 text-[#AEB8B3] hover:border-[#3d504a] hover:text-white'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* HELP NOTE */}
+              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-[#AEB8B3]">
+                <Info size={13} className="text-[#8FE3C1] shrink-0" />
+                <span>You can enter the exact reading or choose a range above.</span>
+              </div>
+
+              {/* ERROR BANNER */}
+              {error && (
+                <div className="rounded-xl border border-selvi-red/30 bg-selvi-red/10 p-2.5 text-xs font-bold text-selvi-red flex items-center gap-2">
+                  <X size={14} className="shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* BOTTOM BUTTONS (← Back & Continue →) */}
+              <div className="pt-2 sm:pt-4 border-t border-[#1e2e28] flex items-center justify-between gap-4">
                 <button
                   type="button"
-                  onClick={() => setBrandSearch('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate hover:text-dark"
+                  onClick={goBack}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-white hover:bg-gray-100 border border-border text-[#111816] px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md transition-all active:scale-95"
                 >
-                  <X size={13} />
+                  <ArrowLeft size={14} />
+                  <span>Back</span>
                 </button>
-              )}
-            </div>
 
-            {/* Automotive Brand Cards */}
-            <div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5 max-h-[240px] sm:max-h-none overflow-y-auto pr-1">
+                <button
+                  type="button"
+                  onClick={goNext}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#0E3B2E] hover:bg-[#134d3d] border border-[#8FE3C1]/30 text-white px-7 sm:px-9 py-2.5 sm:py-3 text-xs sm:text-sm font-extrabold uppercase tracking-wider shadow-lg shadow-black/40 transition-all active:scale-95"
+                >
+                  <span>Continue</span>
+                  <ArrowRight size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Subtle Understated Reassurance Beneath Form */}
+        <div className="text-center pt-1 sm:pt-2">
+          <p className="text-[11px] sm:text-xs font-medium text-text/60">
+            Free valuation • No obligation • Your details are secure
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // MAIN PROGRESSIVE DISCLOSURE FORM (One Decision Per Screen)
+  // ──────────────────────────────────────────────────────────
+  return (
+    <div className="space-y-2 sm:space-y-4" ref={formCardRef}>
+      {/* ── Main Form Container ── */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/80 bg-surface p-3.5 sm:p-9 md:p-11 shadow-2xl text-text-strong">
+        {/* Subtle top rim beam */}
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/10 via-primary/30 to-primary/10" />
+
+        {/* ── Understated Progress Header (STEP X OF 8) ── */}
+        <div className="mb-2 sm:mb-8 pb-1.5 sm:pb-3 border-b border-border/60 flex items-center justify-between">
+          <span className="font-display font-extrabold uppercase tracking-widest text-[10px] sm:text-xs text-primary">
+            STEP {step} OF {TOTAL_STEPS}
+          </span>
+
+          <div className="flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-text/60">
+            <Lock size={11} className="text-primary" />
+            <span>Secure Valuation</span>
+          </div>
+        </div>
+
+        {/* Thin Understated Progress Line */}
+        <div className="-mt-1.5 sm:-mt-3 mb-3 sm:mb-8 h-1 w-full overflow-hidden rounded-full bg-border/50">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-400 ease-[cubic-bezier(0.22,1,0.36,1)]"
+            style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+          />
+        </div>
+
+        {/* ── Step Content with Smooth Editorial Transitions ── */}
+        <div
+          ref={stepContentRef}
+          className={`min-h-[260px] sm:min-h-[360px] flex flex-col justify-between transition-all duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            isTransitioning
+              ? direction > 0
+                ? 'opacity-0 translate-x-4'
+                : 'opacity-0 -translate-x-4'
+              : 'opacity-100 translate-x-0'
+          }`}
+        >
+          {/* ═════════════════════════════════════════════════════════
+              STEP 1: BIKE BRAND
+          ═════════════════════════════════════════════════════════ */}
+          {step === 1 && (
+            <div className="space-y-2.5 sm:space-y-6">
+              <div className="text-left">
+                <h2 className="font-display text-lg sm:text-3xl font-extrabold uppercase tracking-tight text-text-strong leading-tight">
+                  TELL US ABOUT YOUR BIKE
+                </h2>
+                <p className="mt-0.5 sm:mt-1.5 text-[11px] sm:text-sm text-text/75 font-medium leading-snug sm:leading-relaxed">
+                  We&apos;ll use these details to prepare a fair, verified valuation.
+                </p>
+              </div>
+
+              {/* Search brand input */}
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text/45" />
+                <input
+                  type="text"
+                  value={brandSearch}
+                  onChange={(e) => setBrandSearch(e.target.value)}
+                  placeholder="Search brand (e.g. Royal Enfield, Yamaha)..."
+                  className="w-full rounded-xl border border-border bg-background py-2 sm:py-3 pl-9 pr-3 text-xs sm:text-sm text-text-strong placeholder:text-text/40 focus:border-primary focus:outline-none font-medium transition-colors"
+                />
+                {brandSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setBrandSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text/40 hover:text-text-strong"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* Curated Brand Selection Grid on Mobile, List on Desktop */}
+              <div className="grid grid-cols-2 sm:grid-cols-1 gap-1.5 sm:gap-2">
                 {filteredBrands.map((b) => {
                   const isSelected = brand.toLowerCase() === b.toLowerCase();
                   return (
@@ -635,878 +973,820 @@ export default function SellForm({ brands: _brands }: { brands: string[] }) {
                       key={b}
                       type="button"
                       onClick={() => handleSelectBrand(b)}
-                      className={`group relative flex flex-col items-center justify-center rounded-xl border p-2 sm:p-2.5 text-center transition-all active:scale-[0.98] ${
+                      className={`w-full flex items-center justify-between rounded-xl sm:rounded-2xl border px-3 sm:px-5 py-2 sm:py-3.5 text-left transition-all active:scale-[0.99] ${
                         isSelected
-                          ? 'border-primary bg-primary text-white shadow-md'
-                          : 'border-line bg-surface text-slate hover:border-primary/40 hover:bg-cream hover:text-primary'
+                          ? 'border-primary bg-primary/5 ring-1.5 ring-primary shadow-sm text-primary'
+                          : 'border-border/80 bg-surface text-text-strong hover:border-primary/40 hover:bg-background'
                       }`}
                     >
-                      <span className="font-display text-xs sm:text-sm font-bold tracking-wide truncate max-w-full">
+                      <span className="font-display text-xs sm:text-base font-bold tracking-tight truncate">
                         {b}
                       </span>
-                      {isSelected && (
-                        <span className="mt-1 flex h-4 w-4 items-center justify-center rounded-full bg-white text-primary">
-                          <Check size={10} strokeWidth={3} />
-                        </span>
+                      {isSelected ? (
+                        <div className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+                          <Check size={12} strokeWidth={3} />
+                        </div>
+                      ) : (
+                        <ChevronRight size={14} className="text-text/30 shrink-0 hidden sm:block" />
                       )}
                     </button>
                   );
                 })}
               </div>
 
-              {/* View All Brands toggle (when not actively searching) */}
+              {/* View all brands toggle */}
               {!brandSearch && (
-                <div className="mt-2.5 flex justify-center">
+                <div className="text-center pt-0.5">
                   <button
                     type="button"
                     onClick={() => setShowAllBrands(!showAllBrands)}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    className="text-[11px] sm:text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
                   >
-                    {showAllBrands ? 'Show popular brands only' : `View all ${BIKE_BRANDS.length} brands`}
-                    <ChevronDown
-                      size={13}
-                      className={`transition-transform ${showAllBrands ? 'rotate-180' : ''}`}
-                    />
+                    <span>{showAllBrands ? 'Show popular brands only' : `Other brands (${BIKE_BRANDS.length - POPULAR_BRANDS.length} more)`}</span>
+                    <ChevronDown size={12} className={showAllBrands ? 'rotate-180 transition-transform' : ''} />
                   </button>
                 </div>
               )}
             </div>
+          )}
 
-            {/* Selected Brand Pill & Continue Button */}
-            <div className="border-t border-line pt-3 sm:pt-5 flex items-center justify-between">
-              <span className="text-xs text-slate">
-                Selected: <strong className="text-dark">{brand}</strong>
-              </span>
-              <SpecularButton type="button" onClick={goNext} variant="white" size="sm">
-                <span>Continue to Model</span>
-                <ArrowRight size={15} />
-              </SpecularButton>
-            </div>
-          </div>
-        );
-
-      case 2:
-        return (
-          <div className="space-y-3 sm:space-y-6">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="rounded-md bg-primary/10 border border-primary/30 px-2 py-0.5 text-[10px] font-bold text-primary uppercase">
+          {/* ═════════════════════════════════════════════════════════
+              STEP 2: BIKE MODEL
+          ═════════════════════════════════════════════════════════ */}
+          {step === 2 && (
+            <div className="space-y-2.5 sm:space-y-6">
+              <div className="text-left">
+                <div className="inline-flex items-center gap-1 rounded-md bg-primary/10 border border-primary/25 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold text-primary uppercase mb-1">
                   {brand}
-                </span>
-              </div>
-              <h2 className="mt-1 font-display text-lg font-extrabold uppercase tracking-tight text-dark sm:text-3xl">
-                Which model?
-              </h2>
-              <p className="mt-0.5 text-xs text-slate">
-                Select your {brand} model from our catalog.
-              </p>
-            </div>
-
-            {/* Search input & Custom toggle */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="relative flex-1 max-w-md">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate/60" />
-                <input
-                  type="text"
-                  value={modelSearch}
-                  onChange={(e) => setModelSearch(e.target.value)}
-                  placeholder={`Search ${brand} model...`}
-                  className="w-full rounded-xl border border-line bg-cream py-2 pl-8 pr-3 text-xs text-dark placeholder:text-slate/60 focus:border-primary focus:outline-none"
-                />
+                </div>
+                <h2 className="font-display text-lg sm:text-3xl font-extrabold uppercase tracking-tight text-text-strong leading-tight">
+                  WHICH MODEL DO YOU RIDE?
+                </h2>
+                <p className="mt-0.5 sm:mt-1.5 text-[11px] sm:text-sm text-text/75 font-medium leading-snug sm:leading-relaxed">
+                  Select your {brand} model from our verified catalog.
+                </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setIsTypingCustomModel(!isTypingCustomModel);
-                  if (!isTypingCustomModel) setCustomModel('');
-                }}
-                className="text-xs font-bold text-primary hover:underline shrink-0"
-              >
-                {isTypingCustomModel ? 'From list' : '+ Custom model'}
-              </button>
-            </div>
+              {/* Search input & Custom model toggle */}
+              <div className="flex items-center justify-between gap-2 sm:gap-3">
+                <div className="relative flex-1">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text/45" />
+                  <input
+                    type="text"
+                    value={modelSearch}
+                    onChange={(e) => setModelSearch(e.target.value)}
+                    placeholder={`Search ${brand} model...`}
+                    className="w-full rounded-xl border border-border bg-background py-2 sm:py-3 pl-9 pr-3 text-xs sm:text-sm text-text-strong placeholder:text-text/40 focus:border-primary focus:outline-none font-medium transition-colors"
+                  />
+                </div>
 
-            {/* Custom Model Input vs Popular Models List */}
-            {isTypingCustomModel ? (
-              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 max-w-md">
-                <label className="block text-xs font-bold uppercase tracking-wider text-dark mb-1">
-                  Enter Custom {brand} Model
-                </label>
-                <input
-                  type="text"
-                  value={customModel}
-                  onChange={(e) => setCustomModel(e.target.value)}
-                  placeholder={`e.g. ${brand} Custom Edition`}
-                  className="w-full rounded-xl border border-line bg-cream px-3 py-2 text-xs text-dark focus:border-primary focus:outline-none"
-                  autoFocus
-                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsTypingCustomModel(!isTypingCustomModel);
+                    if (!isTypingCustomModel) setCustomModel('');
+                  }}
+                  className="text-[11px] sm:text-xs font-bold text-primary hover:underline shrink-0"
+                >
+                  {isTypingCustomModel ? 'From catalog' : '+ Custom edition'}
+                </button>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 max-h-[220px] sm:max-h-72 overflow-y-auto pr-1">
-                {filteredModels.map((m) => {
-                  const isSelected = model === m;
-                  return (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => handleSelectModel(m)}
-                      className={`flex items-center justify-between rounded-xl border p-2 sm:p-2.5 text-left transition-all active:scale-[0.98] ${
-                        isSelected
-                          ? 'border-primary bg-primary text-white shadow-md'
-                          : 'border-line bg-surface text-slate hover:border-primary/40 hover:bg-cream hover:text-primary'
-                      }`}
-                    >
-                      <span className="font-display text-xs font-bold leading-tight">{m}</span>
-                      {isSelected && (
-                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white text-primary ml-1">
-                          <Check size={10} strokeWidth={3} />
+
+              {/* Custom Model Input vs Selection List */}
+              {isTypingCustomModel ? (
+                <div className="rounded-xl sm:rounded-2xl border border-primary/30 bg-primary/5 p-3 sm:p-4 space-y-1.5 sm:space-y-2">
+                  <label className="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-text-strong">
+                    Enter Exact {brand} Model Name
+                  </label>
+                  <input
+                    type="text"
+                    value={customModel}
+                    onChange={(e) => setCustomModel(e.target.value)}
+                    placeholder={`e.g. ${brand} Scrambler Special Edition`}
+                    className="w-full rounded-xl border border-border bg-surface px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-text-strong focus:border-primary focus:outline-none font-medium"
+                    autoFocus
+                  />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-1 gap-1.5 sm:gap-2">
+                  {filteredModels.map((m) => {
+                    const isSelected = model === m && !isTypingCustomModel;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => {
+                          setModel(m);
+                          setIsTypingCustomModel(false);
+                        }}
+                        className={`w-full flex items-center justify-between rounded-xl sm:rounded-2xl border px-3 sm:px-5 py-2 sm:py-3.5 text-left transition-all active:scale-[0.99] ${
+                          isSelected
+                            ? 'border-primary bg-primary/5 ring-1.5 ring-primary shadow-sm text-primary'
+                            : 'border-border/80 bg-surface text-text-strong hover:border-primary/40 hover:bg-background'
+                        }`}
+                      >
+                        <span className="font-display text-xs sm:text-base font-bold tracking-tight truncate">
+                          {m}
                         </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+                        {isSelected ? (
+                          <div className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+                            <Check size={12} strokeWidth={3} />
+                          </div>
+                        ) : (
+                          <ChevronRight size={14} className="text-text/30 shrink-0 hidden sm:block" />
+                        )}
+                      </button>
+                    );
+                  })}
 
-            {/* Bottom Actions */}
-            <div className="border-t border-line pt-3 sm:pt-5 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={goBack}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-cream px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs font-bold text-slate transition-all hover:bg-surface hover:text-dark active:scale-[0.98] shrink-0"
-              >
-                <ArrowLeft size={14} />
-                <span>Back</span>
-              </button>
-              <button
-                type="button"
-                onClick={goNext}
-                className="btn-red inline-flex items-center gap-1.5 rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 text-xs font-bold uppercase tracking-wider shadow-md active:scale-[0.98]"
-              >
-                Continue to Year & KM
-                <ArrowRight size={14} />
-              </button>
+                  {!modelSearch && allBrandModels.length > 6 && (
+                    <div className="col-span-2 sm:col-span-1 text-center pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowAllModels(!showAllModels)}
+                        className="text-[11px] sm:text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
+                      >
+                        <span>{showAllModels ? 'Show fewer models' : `View all ${allBrandModels.length} models`}</span>
+                        <ChevronDown size={12} className={showAllModels ? 'rotate-180 transition-transform' : ''} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
-        );
+          )}
 
-      case 3:
-        return (
-          <div className="space-y-4 sm:space-y-6">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="rounded-md bg-primary/10 border border-primary/30 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-primary uppercase">
-                  {brand} {currentModelName}
-                </span>
+          {/* ═════════════════════════════════════════════════════════
+              STEP 3: REGISTRATION YEAR
+          ═════════════════════════════════════════════════════════ */}
+          {step === 3 && (
+            <div className="space-y-2.5 sm:space-y-6">
+              <div className="text-left">
+                <h2 className="font-display text-lg sm:text-3xl font-extrabold uppercase tracking-tight text-text-strong leading-tight">
+                  WHEN WAS YOUR BIKE REGISTERED?
+                </h2>
+                <p className="mt-0.5 sm:mt-1.5 text-[11px] sm:text-sm text-text/75 font-medium leading-snug sm:leading-relaxed">
+                  Select the registration year as recorded in your RC book.
+                </p>
               </div>
-              <h2 className="mt-1 font-display text-xl font-extrabold uppercase tracking-tight text-dark sm:text-3xl">
-                Tell us about your bike.
-              </h2>
-              <p className="text-xs text-slate">
-                Registration year and distance covered.
-              </p>
-            </div>
 
-            {/* Registration Year */}
-            <div className="rounded-xl border border-line bg-cream p-3.5 sm:p-5">
-              <label className="mb-2 block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-dark">
-                Registration Year *
-              </label>
-              <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5 sm:gap-2.5">
-                {POPULAR_YEARS.map((y) => {
-                  const isSel = year === y;
+              {/* Clean selection grid for recent years */}
+              <div className="grid grid-cols-3 sm:grid-cols-1 gap-1.5 sm:gap-2">
+                {RECENT_YEARS.map((y) => {
+                  const isSelected = year === y && !isOlderYearSelect;
                   return (
                     <button
                       key={y}
                       type="button"
-                      onClick={() => setYear(y)}
-                      className={`w-full rounded-lg border py-1.5 sm:py-2 text-center text-xs font-bold transition-all active:scale-[0.98] ${
-                        isSel
-                          ? 'border-primary bg-primary text-white shadow-md'
-                          : 'border-line bg-surface text-slate hover:border-primary/40 hover:text-primary'
+                      onClick={() => {
+                        setYear(y);
+                        setIsOlderYearSelect(false);
+                      }}
+                      className={`w-full flex items-center justify-center sm:justify-between rounded-xl sm:rounded-2xl border px-2.5 sm:px-5 py-2 sm:py-3.5 text-center sm:text-left transition-all active:scale-[0.99] ${
+                        isSelected
+                          ? 'border-primary bg-primary/5 ring-1.5 ring-primary shadow-sm text-primary'
+                          : 'border-border/80 bg-surface text-text-strong hover:border-primary/40 hover:bg-background'
                       }`}
                     >
-                      {y}
+                      <span className="font-display text-xs sm:text-lg font-bold tracking-tight">
+                        {y}
+                      </span>
+                      {isSelected ? (
+                        <div className="hidden sm:flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white">
+                          <Check size={14} strokeWidth={3} />
+                        </div>
+                      ) : (
+                        <ChevronRight size={16} className="text-text/30 hidden sm:block" />
+                      )}
                     </button>
                   );
                 })}
+              </div>
 
-                {/* Custom Older Year Dropdown Popover */}
-                <div ref={olderYearRef} className="relative w-full">
-                  <button
-                    type="button"
-                    onClick={() => setIsOlderYearOpen(!isOlderYearOpen)}
-                    className={`flex h-full w-full items-center justify-center gap-1 rounded-lg border py-1.5 sm:py-2 text-center text-xs font-bold transition-all active:scale-[0.98] ${
-                      !POPULAR_YEARS.includes(year)
-                        ? 'border-primary bg-primary text-white shadow-md'
-                        : 'border-line bg-surface text-slate hover:border-primary/40 hover:text-primary'
-                    }`}
-                  >
-                    <span>{!POPULAR_YEARS.includes(year) ? year : 'Older'}</span>
-                    <ChevronDown
-                      size={11}
-                      className={`text-slate transition-transform ${isOlderYearOpen ? 'rotate-180' : ''}`}
-                    />
-                  </button>
+              {/* Clean Earlier Years Dropdown Selector */}
+              <div className="pt-1.5 sm:pt-2 border-t border-border/60">
+                <label className="block text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text/70 mb-1 sm:mb-2">
+                  Or Earlier Registration Year (1995 – 2019)
+                </label>
+                <select
+                  value={!RECENT_YEARS.includes(year) ? year : ''}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setYear(Number(e.target.value));
+                      setIsOlderYearSelect(true);
+                    }
+                  }}
+                  className="w-full rounded-xl border border-border bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-bold text-text-strong focus:border-primary focus:outline-none"
+                >
+                  <option value="">Select earlier year...</option>
+                  {Array.from({ length: 25 }, (_, i) => 2019 - i).map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
 
-                  {isOlderYearOpen && (
-                    <div className="absolute right-0 top-full z-50 mt-1.5 w-36 max-h-56 overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-2xl backdrop-blur-md">
-                      <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate/70">
-                        Select Year
-                      </div>
-                      {YEAR_OPTIONS.filter((y) => !POPULAR_YEARS.includes(y)).map((y) => {
-                        const isCur = year === y;
-                        return (
-                          <button
-                            key={y}
-                            type="button"
-                            onClick={() => {
-                              setYear(y);
-                              setIsOlderYearOpen(false);
-                            }}
-                            className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-                              isCur
-                                ? 'bg-primary text-white'
-                                : 'text-slate hover:bg-cream hover:text-dark'
+
+          {/* ═════════════════════════════════════════════════════════
+              STEP 5: BIKE CONDITION & PRICING
+          ═════════════════════════════════════════════════════════ */}
+          {step === 5 && (
+            <div className="space-y-3 sm:space-y-6">
+              <div className="text-left">
+                <h2 className="font-display text-lg sm:text-3xl font-extrabold uppercase tracking-tight text-text-strong leading-tight">
+                  TELL US ABOUT ITS CONDITION
+                </h2>
+                <p className="mt-0.5 sm:mt-1.5 text-[11px] sm:text-sm text-text/75 font-medium leading-snug sm:leading-relaxed">
+                  This helps us provide an accurate market estimate.
+                </p>
+              </div>
+
+              {/* Condition Cards */}
+              <div className="space-y-1.5 sm:space-y-2.5">
+                <label className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-strong">
+                  Overall Condition
+                </label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  {CONDITIONS.map((c) => {
+                    const isSelected = condition === c.value;
+                    return (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => setCondition(c.value)}
+                        className={`w-full flex items-center justify-between rounded-xl sm:rounded-2xl border p-2.5 sm:p-4 text-left transition-all active:scale-[0.99] ${
+                          isSelected
+                            ? 'border-primary bg-primary/5 ring-1.5 ring-primary shadow-sm'
+                            : 'border-border/80 bg-surface text-text-strong hover:border-primary/40 hover:bg-background'
+                        }`}
+                      >
+                        <div>
+                          <span
+                            className={`font-display text-xs sm:text-base font-bold uppercase tracking-tight ${
+                              isSelected ? 'text-primary' : 'text-text-strong'
                             }`}
                           >
-                            <span>{y}</span>
-                            {isCur && <Check size={12} />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                            {c.title}
+                          </span>
+                          <p className="mt-0.5 text-[10px] sm:text-xs text-text/75 font-medium line-clamp-1 sm:line-clamp-none">
+                            {c.desc}
+                          </p>
+                        </div>
+                        {isSelected && (
+                          <div className="ml-2 flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+                            <Check size={12} strokeWidth={3} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
 
-            {/* KM Driven */}
-            <div className="rounded-xl border border-line bg-cream p-3.5 sm:p-5">
-              <label className="mb-2 block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-dark">
-                Distance Covered (KM Driven) *
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-2.5">
-                {KM_PRESETS.map((p) => {
-                  const isSel = Number(km) === p.value;
-                  return (
-                    <button
-                      key={p.label}
-                      type="button"
-                      onClick={() => setKm(p.value)}
-                      className={`rounded-lg border py-1.5 text-center text-[11px] sm:text-xs font-semibold transition-all active:scale-[0.98] ${
-                        isSel
-                          ? 'border-primary bg-primary text-white shadow-md'
-                          : 'border-line bg-surface text-slate hover:border-primary/40 hover:text-primary'
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  );
-                })}
+              {/* Ownership & Service History */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 pt-1.5 sm:pt-2 border-t border-border/60">
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-strong">
+                    Owners
+                  </label>
+                  <select
+                    value={owners}
+                    onChange={(e) => setOwners(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-background px-2.5 sm:px-3.5 py-2 sm:py-3 text-xs sm:text-sm font-bold text-text-strong focus:border-primary focus:outline-none"
+                  >
+                    {OWNER_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-strong">
+                    Service History
+                  </label>
+                  <select
+                    value={serviceHistory}
+                    onChange={(e) => setServiceHistory(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-background px-2.5 sm:px-3.5 py-2 sm:py-3 text-xs sm:text-sm font-bold text-text-strong focus:border-primary focus:outline-none"
+                  >
+                    {SERVICE_HISTORY_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              <div className="relative max-w-sm">
-                <input
-                  type="number"
-                  min={0}
-                  value={km}
-                  onChange={(e) => setKm(e.target.value)}
-                  placeholder="Or enter exact KM (e.g. 12500)"
-                  className="w-full rounded-lg border border-line bg-surface py-2.5 pl-3.5 pr-10 text-xs font-bold text-dark focus:border-primary focus:outline-none"
-                />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate">
-                  KM
-                </span>
-              </div>
-            </div>
-
-            {/* Bottom Actions */}
-            <div className="border-t border-line pt-4 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={goBack}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-cream px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs font-bold text-slate transition-all hover:bg-surface hover:text-dark active:scale-[0.98] shrink-0"
-              >
-                <ArrowLeft size={14} />
-                <span>Back</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={goNext}
-                className="btn-red inline-flex items-center gap-1.5 rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 text-xs font-bold uppercase tracking-wider shadow-md active:scale-[0.98]"
-              >
-                Continue to Valuation
-                <ArrowRight size={14} />
-              </button>
-            </div>
-          </div>
-        );
-
-      case 4:
-        return (
-          <div className="space-y-4 sm:space-y-6">
-            <div>
-              <h2 className="font-display text-xl font-extrabold uppercase tracking-tight text-dark sm:text-3xl">
-                What&apos;s your bike worth?
-              </h2>
-              <p className="text-xs text-slate">
-                Your expected price and general motorcycle condition.
-              </p>
-            </div>
-
-            {/* Condition Cards */}
-            <div>
-              <label className="mb-2 block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-dark">
-                Condition Assessment *
-              </label>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {CONDITIONS.map((c) => {
-                  const isSel = condition === c.value;
-                  return (
-                    <button
-                      key={c.value}
-                      type="button"
-                      onClick={() => setCondition(c.value)}
-                      className={`flex flex-col justify-between rounded-xl border p-2.5 sm:p-3 text-left transition-all active:scale-[0.98] ${
-                        isSel
-                          ? 'border-primary bg-primary/10 ring-2 ring-primary shadow-md'
-                          : 'border-line bg-cream hover:border-primary/40 hover:bg-surface'
-                      }`}
-                    >
-                      <div>
-                        <span className="font-display text-xs sm:text-sm font-bold text-dark block">
-                          {c.title}
-                        </span>
-                        <p className="mt-1 text-[11px] sm:text-xs text-slate leading-relaxed">{c.desc}</p>
-                      </div>
-
-                      <div className="mt-2.5 flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-slate">
-                        <div
-                          className={`flex h-4 w-4 items-center justify-center rounded-full border ${
-                            isSel
-                              ? 'border-primary bg-primary text-white'
-                              : 'border-line bg-surface'
-                          }`}
-                        >
-                          {isSel && <Check size={10} strokeWidth={3} />}
-                        </div>
-                        <span>{isSel ? 'Selected' : 'Select'}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Expected Price */}
-            <div className="rounded-xl border border-line bg-cream p-3.5 sm:p-5">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-dark">
-                  Expected Price (₹)
+              {/* Expected Price */}
+              <div className="space-y-1.5 sm:space-y-2 pt-1.5 sm:pt-2 border-t border-border/60">
+                <label className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-strong">
+                  Expected Selling Price *
                 </label>
-                <label className="flex items-center gap-1.5 text-xs text-slate cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={openToOffer}
-                    onChange={(e) => setOpenToOffer(e.target.checked)}
-                    className="rounded border-line bg-surface accent-primary"
-                  />
-                  <span>Open to evaluation</span>
-                </label>
-              </div>
-
-              {!openToOffer && (
-                <>
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 sm:gap-2.5 mb-2.5">
-                    {PRICE_PRESETS.map((p) => {
-                      const isCur = Number(expectedPrice) === p.value;
-                      return (
-                        <button
-                          key={p.label}
-                          type="button"
-                          onClick={() => setExpectedPrice(p.value)}
-                          className={`w-full rounded-lg border py-1.5 sm:py-2 px-1.5 text-center text-xs font-semibold transition-all active:scale-[0.98] ${
-                            isCur
-                              ? 'border-primary bg-primary text-white shadow-sm'
-                              : 'border-line bg-surface text-slate hover:border-primary/40 hover:text-primary'
-                          }`}
-                        >
-                          {p.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="relative max-w-sm">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-dark text-sm">
+                {!openToOffer && (
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-xs text-text/60">
                       ₹
                     </span>
                     <input
                       type="number"
-                      min={0}
-                      step={1000}
                       value={expectedPrice}
-                      onChange={(e) => setExpectedPrice(e.target.value)}
-                      placeholder="e.g. 150000"
-                      className="w-full rounded-lg border border-line bg-surface py-2.5 pl-8 pr-4 text-xs sm:text-sm font-bold text-dark focus:border-primary focus:outline-none"
+                      onChange={(e) =>
+                        setExpectedPrice(e.target.value ? Number(e.target.value) : '')
+                      }
+                      placeholder="Enter expected amount..."
+                      className="w-full rounded-xl border border-border bg-background py-2 sm:py-3 pl-7 pr-3 text-xs sm:text-sm text-text-strong placeholder:text-text/40 focus:border-primary focus:outline-none font-medium"
                     />
                   </div>
-                </>
-              )}
-            </div>
-
-            {/* Optional Short Description */}
-            <div>
-              <label className="mb-1.5 block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-dark">
-                Additional Highlights <span className="text-slate/70 font-normal">(Optional)</span>
-              </label>
-              <textarea
-                rows={2}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                maxLength={2000}
-                placeholder="Service history, accessories, insurance validity, modifications, single owner…"
-                className="w-full rounded-xl border border-line bg-cream p-3 text-xs text-dark placeholder:text-slate/60 focus:border-primary focus:outline-none"
-              />
-            </div>
-
-            {/* Bottom Actions */}
-            <div className="border-t border-line pt-4 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={goBack}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-cream px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs font-bold text-slate transition-all hover:bg-surface hover:text-dark active:scale-[0.98] shrink-0"
-              >
-                <ArrowLeft size={14} />
-                <span>Back</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={goNext}
-                className="btn-red inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 text-xs font-bold uppercase tracking-wider shadow-md active:scale-[0.98]"
-              >
-                Continue to Photos
-                <ArrowRight size={14} />
-              </button>
-            </div>
-          </div>
-        );
-
-      case 5:
-        return (
-          <div className="space-y-4 sm:space-y-6">
-            <div>
-              <div className="flex items-center justify-between">
-                <h2 className="font-display text-xl font-extrabold uppercase tracking-tight text-dark sm:text-3xl">
-                  Show us your bike.
-                </h2>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                    photos.length >= MIN_FILES
-                      ? 'bg-primary/15 text-primary'
-                      : 'bg-brand/15 text-brand'
-                  }`}
-                >
-                  {photos.length} / {MAX_FILES} Photos
-                </span>
-              </div>
-              <p className="text-xs text-slate">
-                Good photos help our evaluators give you the best market offer.
-              </p>
-            </div>
-
-            {/* Photo Guide Badges */}
-            <div className="rounded-xl border border-line bg-cream p-3">
-              <div className="flex flex-wrap gap-1.5">
-                {PHOTO_GUIDE_ITEMS.map((g) => (
-                  <span
-                    key={g.label}
-                    className="inline-flex items-center gap-1 rounded-md border border-line bg-surface px-2 py-0.5 text-[11px] text-slate font-medium"
-                  >
-                    <Camera size={11} className="text-primary" />
-                    <span>{g.label}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Drag & Drop Upload Zone */}
-            <div>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  handleAddFiles(e.dataTransfer.files);
-                }}
-                className="group flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/30 bg-cream px-4 py-6 sm:py-9 text-center transition-all hover:border-primary hover:bg-surface"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform group-hover:scale-110">
-                  {optimizing ? (
-                    <Loader2 size={20} className="animate-spin" />
-                  ) : (
-                    <ImagePlus size={20} />
-                  )}
-                </div>
-                <div>
-                  <p className="font-display text-xs sm:text-sm font-bold text-dark">
-                    {optimizing
-                      ? 'Optimizing photos...'
-                      : 'Click to upload or drag & drop photos'}
-                  </p>
-                  <p className="text-[11px] text-slate">
-                    JPG, PNG, WebP · Min 3 photos
-                  </p>
-                </div>
-              </button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={ACCEPTED_TYPES.join(',')}
-                multiple
-                hidden
-                onChange={(e) => {
-                  handleAddFiles(e.target.files);
-                  e.target.value = '';
-                }}
-              />
-            </div>
-
-            {/* Uploaded Photos Grid */}
-            {photos.length > 0 && (
-              <div>
-                <div className="mb-2.5 flex items-center justify-between text-xs">
-                  <span className="font-bold text-dark">
-                    Uploaded Photos ({photos.length})
-                  </span>
-                  <span className="text-slate/70">First photo is cover image</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-5">
-                  {photos.map((p, i) => (
-                    <div
-                      key={p.previewUrl}
-                      className="group relative aspect-square overflow-hidden rounded-xl border border-line bg-cream shadow-sm"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={p.previewUrl}
-                        alt={`Photo ${i + 1}`}
-                        className="h-full w-full object-cover"
-                      />
-
-                      {i === 0 ? (
-                        <span className="absolute left-2 top-2 rounded-md bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow">
-                          Cover
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => makeCover(i)}
-                          className="absolute left-2 top-2 opacity-0 group-hover:opacity-100 rounded-md bg-dark/80 px-2 py-0.5 text-[10px] font-medium text-white transition-opacity hover:bg-primary"
-                        >
-                          Make Cover
-                        </button>
-                      )}
-
-                      <span className="absolute bottom-1.5 left-2 rounded bg-dark/80 px-1.5 py-0.5 text-[9px] font-medium text-white/90">
-                        {formatFileSize(p.size)}
-                      </span>
-
-                      <button
-                        type="button"
-                        aria-label={`Remove photo ${i + 1}`}
-                        onClick={() => removePhoto(i)}
-                        className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-dark/80 text-white transition-colors hover:bg-red-600"
-                      >
-                        <X size={13} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Bottom Actions */}
-            <div className="border-t border-line pt-4 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={goBack}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-cream px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs font-bold text-slate transition-all hover:bg-surface hover:text-dark active:scale-[0.98] shrink-0"
-              >
-                <ArrowLeft size={14} />
-                <span>Back</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={goNext}
-                className="btn-red inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 text-xs font-bold uppercase tracking-wider shadow-md active:scale-[0.98]"
-              >
-                Continue to Contact
-                <ArrowRight size={14} />
-              </button>
-            </div>
-          </div>
-        );
-
-      case 6:
-        return (
-          <div className="space-y-4 sm:space-y-6">
-            <div>
-              <h2 className="font-display text-xl font-extrabold uppercase tracking-tight text-dark sm:text-3xl">
-                How can we reach you?
-              </h2>
-              <p className="text-xs text-slate">
-                Our evaluators will inspect your details and share the best valuation.
-              </p>
-            </div>
-
-            {/* Inputs Grid */}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-dark">
-                  Full Name *
-                </label>
-                <div className="relative">
-                  <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate/60" />
-                  <input
-                    type="text"
-                    required
-                    maxLength={120}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="w-full rounded-xl border border-line bg-cream py-2.5 pl-10 pr-4 text-xs text-dark focus:border-primary focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-dark">
-                  Mobile Number *
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate/70">
-                    +91
-                  </span>
-                  <input
-                    type="tel"
-                    required
-                    inputMode="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="9876543210"
-                    className="w-full rounded-xl border border-line bg-cream py-2.5 pl-12 pr-4 text-xs text-dark focus:border-primary focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-dark">
-                  Your City / Location *
-                </label>
-                <div className="relative mb-1.5">
-                  <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate/60" />
-                  <input
-                    type="text"
-                    required
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="e.g. Chennai, Tamil Nadu"
-                    className="w-full rounded-xl border border-line bg-cream py-2.5 pl-10 pr-4 text-xs text-dark focus:border-primary focus:outline-none"
-                  />
-                </div>
-
-                {/* Quick City Pills */}
-                <div className="flex flex-wrap gap-1">
-                  {QUICK_CITIES.map((city) => (
-                    <button
-                      key={city}
-                      type="button"
-                      onClick={() => setLocation(city)}
-                      className={`rounded-lg border px-2 py-0.5 text-[11px] font-semibold transition-all active:scale-[0.98] ${
-                        location === city
-                          ? 'border-primary bg-primary text-white'
-                          : 'border-line bg-surface text-slate hover:border-primary/40 hover:text-primary'
-                      }`}
-                    >
-                      {city}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Privacy Guarantee */}
-            <div className="flex items-center gap-2 rounded-xl border border-line bg-cream px-3.5 py-2 text-[11px] text-slate">
-              <ShieldCheck size={16} className="shrink-0 text-primary" />
-              <span>
-                Your details are confidential and used solely to contact you regarding your bike.
-              </span>
-            </div>
-
-            {/* Submission Summary Card */}
-            <div className="rounded-xl border border-line bg-cream p-3.5 sm:p-4">
-              <div className="flex items-center justify-between border-b border-line pb-2">
-                <span className="font-display text-[11px] font-bold uppercase tracking-wider text-primary">
-                  Summary
-                </span>
-                <span className="text-[11px] text-slate/70">
-                  {photos.length} photos
-                </span>
-              </div>
-
-              <div className="mt-2.5 grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-slate/70 uppercase text-[9px]">Bike</span>
-                  <p className="font-bold text-dark text-xs mt-0.5 truncate">
-                    {brand} {currentModelName}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-slate/70 uppercase text-[9px]">Year & KM</span>
-                  <p className="font-bold text-dark text-xs mt-0.5">
-                    {year} • {formatKm(Number(km))}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-slate/70 uppercase text-[9px]">Condition</span>
-                  <p className="font-bold text-dark text-xs mt-0.5">{condition}</p>
-                </div>
-                <div>
-                  <span className="text-slate/70 uppercase text-[9px]">Expected Price</span>
-                  <p className="font-bold text-primary text-xs mt-0.5">
-                    {openToOffer ? 'Open to offer' : expectedPrice ? formatPrice(Number(expectedPrice)) : 'Open to offer'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Final CTA Submit Button */}
-            <div className="border-t border-line pt-4 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={goBack}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-cream px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs font-bold text-slate transition-all hover:bg-surface hover:text-dark active:scale-[0.98] shrink-0"
-              >
-                <ArrowLeft size={14} />
-                <span>Back</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={busy}
-                onClick={handleSubmit}
-                className="btn-red inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 sm:px-5 sm:py-3 text-xs font-bold uppercase tracking-wider shadow-lg active:scale-[0.98] disabled:opacity-50"
-              >
-                {busy ? (
-                  <>
-                    <Loader2 size={15} className="animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    Get My Bike Valuation
-                    <ArrowRight size={15} />
-                  </>
                 )}
-              </button>
-            </div>
-          </div>
-        );
 
-      default:
-        return null;
-    }
-  }
-
-  const progressPercent = ((step / 6) * 100).toFixed(2);
-
-  return (
-    <div ref={formRef} className="relative overflow-hidden rounded-2xl border border-line bg-surface text-dark shadow-xl">
-      {/* ────────────────────────────────────────────────────────── */}
-      {/* STABLE HEADER: PROGRESS BAR & STEP INDICATOR               */}
-      {/* ────────────────────────────────────────────────────────── */}
-      <div className="border-b border-line bg-cream">
-        {/* Animated thin green line */}
-        <div className="h-1 w-full bg-line overflow-hidden">
-          <div
-            className="h-full bg-primary transition-[width] duration-[400ms] ease-out shadow-[0_0_12px_rgba(14,59,46,0.3)]"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-
-        <div className="flex items-center justify-between px-3.5 py-2 sm:px-8 sm:py-3.5">
-          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-primary">
-            Step {step} of 6
-          </span>
-
-          {/* Step Category Badge */}
-          <span className="text-[11px] sm:text-xs font-semibold text-slate">
-            {step === 1 && 'Brand Selection'}
-            {step === 2 && 'Model Selection'}
-            {step === 3 && 'Year & KM'}
-            {step === 4 && 'Price & Condition'}
-            {step === 5 && 'Bike Photos'}
-            {step === 6 && 'Contact & Valuation'}
-          </span>
-        </div>
-      </div>
-
-      {/* ────────────────────────────────────────────────────────── */}
-      {/* STEP CONTAINER BODY (HEIGHT-ANIMATED & SMOOTH SLIDING)     */}
-      {/* ────────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          height: containerHeight ? `${containerHeight}px` : 'auto',
-        }}
-        className="relative overflow-hidden transition-[height] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
-      >
-        <div className="relative w-full">
-          {/* Exiting Step overlay during 400ms transition */}
-          {exitingStep !== null && (
-            <div
-              key={`exit-${exitingStep}`}
-              className={`absolute top-0 left-0 w-full pointer-events-none z-0 p-3.5 sm:p-8 ${
-                direction > 0 ? 'step-exit-left' : 'step-exit-right'
-              }`}
-            >
-              {renderStepContent(exitingStep)}
+                <label className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold text-text-strong cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={openToOffer}
+                    onChange={(e) => setOpenToOffer(e.target.checked)}
+                    className="h-3.5 w-3.5 sm:h-4 sm:w-4 rounded border-border text-primary focus:ring-primary accent-primary"
+                  />
+                  <span>Open to Selvi Motors expert market evaluation</span>
+                </label>
+              </div>
             </div>
           )}
 
-          {/* Active / Entering Step */}
-          <div
-            key={`active-${step}`}
-            ref={activeStepRef}
-            className={`w-full z-10 p-3.5 sm:p-8 ${
-              exitingStep !== null
-                ? direction > 0
-                  ? 'step-enter-right'
-                  : 'step-enter-left'
-                : ''
-            }`}
-          >
-            {/* Error Alert */}
-            {error && (
-              <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs font-medium text-red-700 animate-in fade-in">
-                <Info size={15} className="shrink-0 text-red-600" />
-                <span>{error}</span>
+          {/* ═════════════════════════════════════════════════════════
+              STEP 6: PHOTOS
+          ═════════════════════════════════════════════════════════ */}
+          {step === 6 && (
+            <div className="space-y-3 sm:space-y-6">
+              <div className="text-left">
+                <h2 className="font-display text-lg sm:text-3xl font-extrabold uppercase tracking-tight text-text-strong leading-tight">
+                  ADD PHOTOS OF YOUR BIKE *
+                </h2>
+                <p className="mt-0.5 sm:mt-1.5 text-[11px] sm:text-sm text-text/75 font-medium leading-snug sm:leading-relaxed">
+                  Clear photos are required to evaluate your motorcycle accurately.
+                </p>
               </div>
-            )}
 
-            {renderStepContent(step)}
-          </div>
+              {/* 5 Recommended angle slots */}
+              <div>
+                <label className="block text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-strong mb-1.5 sm:mb-2.5">
+                  Recommended Angles
+                </label>
+                <div className="grid grid-cols-5 gap-1 sm:gap-2">
+                  {RECOMMENDED_SLOTS.map((slot) => {
+                    const slotPhoto = photos.find((p) => p.slot === slot.id);
+                    return (
+                      <div
+                        key={slot.id}
+                        onClick={() => {
+                          setActiveSlotUpload(slot.id);
+                          fileInputRef.current?.click();
+                        }}
+                        className={`group relative flex flex-col items-center justify-center rounded-xl sm:rounded-2xl border-2 border-dashed p-1.5 sm:p-3 text-center cursor-pointer transition-all ${
+                          slotPhoto
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border bg-background hover:border-primary/50 hover:bg-surface'
+                        }`}
+                      >
+                        {slotPhoto ? (
+                          <div className="relative h-12 sm:h-20 w-full overflow-hidden rounded-lg">
+                            <img
+                              src={slotPhoto.previewUrl}
+                              alt={slot.label}
+                              className="h-full w-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="text-[8px] sm:text-[10px] font-bold text-white uppercase">Replace</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="py-1 sm:py-2 flex flex-col items-center">
+                            <div className="flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-surface border border-border text-primary shadow-xs group-hover:scale-110 transition-transform">
+                              <Camera size={12} />
+                            </div>
+                            <span className="mt-1 font-display text-[9px] sm:text-xs font-bold text-text-strong truncate max-w-full">
+                              {slot.label}
+                            </span>
+                            <span className="hidden sm:block text-[10px] text-text/60">{slot.tip}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Multi-file dropzone */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="flex flex-col items-center justify-center rounded-xl sm:rounded-2xl border-2 border-dashed border-border bg-background p-3 sm:p-5 text-center cursor-pointer hover:border-primary hover:bg-surface transition-all"
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept={ACCEPTED_TYPES.join(',')}
+                  className="hidden"
+                  onChange={(e) => handleAddFiles(e.target.files, activeSlotUpload || undefined)}
+                />
+                <ImagePlus size={18} className="text-primary mb-1" />
+                <p className="font-display text-xs sm:text-sm font-bold text-text-strong">
+                  Upload multiple photos from gallery
+                </p>
+                <p className="text-[10px] sm:text-[11px] text-text/60">
+                  JPEG, PNG, WebP • Max {MAX_FILES} photos
+                </p>
+
+                {optimizing && (
+                  <div className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
+                    <Loader2 size={12} className="animate-spin" />
+                    Optimizing photos for instant upload...
+                  </div>
+                )}
+              </div>
+
+              {/* Uploaded Gallery */}
+              {photos.length > 0 && (
+                <div className="space-y-1.5 sm:space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-text-strong text-[11px] sm:text-xs">
+                      Uploaded ({photos.length}/{MAX_FILES})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPhotos([])}
+                      className="text-text/60 hover:text-selvi-red text-[10px] sm:text-[11px] font-semibold"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5 sm:gap-2">
+                    {photos.map((p, idx) => (
+                      <div
+                        key={idx}
+                        className="group relative aspect-square overflow-hidden rounded-lg sm:rounded-xl border border-border bg-surface shadow-xs"
+                      >
+                        <img
+                          src={p.previewUrl}
+                          alt="preview"
+                          className="h-full w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removePhoto(idx);
+                          }}
+                          className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white hover:bg-selvi-red transition-colors"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═════════════════════════════════════════════════════════
+              STEP 7: YOUR DETAILS
+          ═════════════════════════════════════════════════════════ */}
+          {step === 7 && (
+            <div className="space-y-2.5 sm:space-y-6">
+              <div className="text-left">
+                <h2 className="font-display text-lg sm:text-3xl font-extrabold uppercase tracking-tight text-text-strong leading-tight">
+                  WHERE SHOULD WE SEND YOUR VALUATION?
+                </h2>
+                <p className="mt-0.5 sm:mt-1.5 text-[11px] sm:text-sm text-text/75 font-medium leading-snug sm:leading-relaxed">
+                  Your details are used only to contact you about your bike valuation.
+                </p>
+              </div>
+
+              <div className="space-y-2 sm:space-y-4">
+                {/* Name */}
+                <div className="space-y-1">
+                  <label className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-strong flex items-center gap-1.5">
+                    <User size={12} className="text-primary" /> Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter your full name"
+                    className="w-full rounded-xl border border-border bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-text-strong placeholder:text-text/40 focus:border-primary focus:outline-none font-medium"
+                    autoFocus
+                  />
+                </div>
+
+                {/* Mobile */}
+                <div className="space-y-1">
+                  <label className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-strong flex items-center gap-1.5">
+                    <Phone size={12} className="text-primary" /> Mobile Number *
+                  </label>
+                  <div className="relative flex items-center">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-xs text-text/60">
+                      +91
+                    </span>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="10-digit mobile number"
+                      maxLength={14}
+                      className="w-full rounded-xl border border-border bg-background py-2 sm:py-3 pl-10 sm:pl-12 pr-3 text-xs sm:text-sm text-text-strong placeholder:text-text/40 focus:border-primary focus:outline-none font-medium"
+                    />
+                  </div>
+                </div>
+
+                {/* WhatsApp */}
+                <div className="space-y-1">
+                  <label className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-text-strong cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={sameWhatsapp}
+                      onChange={(e) => setSameWhatsapp(e.target.checked)}
+                      className="h-3.5 w-3.5 sm:h-4 sm:w-4 rounded border-border text-primary focus:ring-primary accent-primary"
+                    />
+                    <span>WhatsApp number is same as mobile</span>
+                  </label>
+
+                  {!sameWhatsapp && (
+                    <input
+                      type="tel"
+                      value={whatsappNumber}
+                      onChange={(e) => setWhatsappNumber(e.target.value)}
+                      placeholder="+91 Dedicated WhatsApp Number"
+                      className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs text-text-strong focus:border-primary focus:outline-none mt-1"
+                    />
+                  )}
+                </div>
+
+                {/* Pincode & Email side by side on mobile for compact height */}
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Pincode */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-strong flex items-center gap-1">
+                      <MapPin size={11} className="text-primary" /> Pincode *
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      value={pincode}
+                      onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="6-digit pincode"
+                      className="w-full rounded-xl border border-border bg-background px-3 py-2 sm:py-3 text-xs sm:text-sm text-text-strong placeholder:text-text/40 focus:border-primary focus:outline-none font-medium"
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-strong truncate">
+                      Email <span className="text-[9px] font-medium text-text/50 lowercase">(opt)</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@example.com"
+                      className="w-full rounded-xl border border-border bg-background px-3 py-2 sm:py-3 text-xs sm:text-sm text-text-strong placeholder:text-text/40 focus:border-primary focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Privacy statement */}
+              <div className="rounded-xl border border-border/80 bg-background/80 p-2 sm:p-3.5 text-[10px] sm:text-xs text-text/75 font-medium flex items-center gap-2">
+                <ShieldCheck size={15} className="text-primary shrink-0" />
+                <span>
+                  <strong>100% Confidential.</strong> Your details are used only to communicate your motorcycle valuation.
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* ═════════════════════════════════════════════════════════
+              STEP 8: REVIEW & SUBMIT
+          ═════════════════════════════════════════════════════════ */}
+          {step === 8 && (
+            <div className="space-y-2.5 sm:space-y-6">
+              <div className="text-left">
+                <h2 className="font-display text-lg sm:text-3xl font-extrabold uppercase tracking-tight text-text-strong leading-tight">
+                  REVIEW YOUR VALUATION REQUEST
+                </h2>
+                <p className="mt-0.5 sm:mt-1.5 text-[11px] sm:text-sm text-text/75 font-medium leading-snug sm:leading-relaxed">
+                  Verify your motorcycle and contact details before requesting valuation.
+                </p>
+              </div>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-3.5">
+                {/* Motorcycle Card */}
+                <div className="rounded-xl sm:rounded-2xl border border-border/90 bg-background p-2.5 sm:p-4 text-left relative">
+                  <div className="flex items-center justify-between border-b border-border pb-1.5 mb-1.5">
+                    <span className="font-display text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-strong truncate">
+                      Bike Details
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => changeStep(1)}
+                      className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-primary hover:underline shrink-0"
+                    >
+                      <Edit3 size={10} /> Edit
+                    </button>
+                  </div>
+                  <div className="space-y-1 text-[11px] sm:text-xs">
+                    <p className="font-display font-bold text-text-strong text-xs sm:text-sm truncate">
+                      {brand} {currentModelName}
+                    </p>
+                    <p className="text-text/70 truncate">
+                      Yr: <strong className="text-text-strong">{year}</strong> • KM: <strong className="text-text-strong">{typeof km === 'number' ? formatKm(km) : `${km} KM`}</strong>
+                    </p>
+                    {regNumber && (
+                      <span className="inline-block font-mono text-[9px] font-bold bg-surface px-1 py-0.5 rounded border border-border text-text-strong">
+                        {regNumber}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Condition & Price Card */}
+                <div className="rounded-xl sm:rounded-2xl border border-border/90 bg-background p-2.5 sm:p-4 text-left relative">
+                  <div className="flex items-center justify-between border-b border-border pb-1.5 mb-1.5">
+                    <span className="font-display text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-strong truncate">
+                      Condition & Price
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => changeStep(5)}
+                      className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-primary hover:underline shrink-0"
+                    >
+                      <Edit3 size={10} /> Edit
+                    </button>
+                  </div>
+                  <div className="space-y-0.5 text-[11px] sm:text-xs">
+                    <p className="text-text/80 truncate">
+                      Cond: <strong className="text-text-strong">{condition}</strong>
+                    </p>
+                    <p className="text-text/80 truncate">
+                      Owner: <strong className="text-text-strong">{owners}</strong>
+                    </p>
+                    <p className="text-text/80 truncate">
+                      Price:{' '}
+                      <strong className="text-primary font-bold">
+                        {openToOffer ? 'Open' : expectedPrice ? formatPrice(Number(expectedPrice)) : 'N/A'}
+                      </strong>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Photos Card */}
+                <div className="rounded-xl sm:rounded-2xl border border-border/90 bg-background p-2.5 sm:p-4 text-left relative">
+                  <div className="flex items-center justify-between border-b border-border pb-1.5 mb-1.5">
+                    <span className="font-display text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-strong truncate">
+                      Photos ({photos.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => changeStep(6)}
+                      className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-primary hover:underline shrink-0"
+                    >
+                      <Edit3 size={10} /> Edit
+                    </button>
+                  </div>
+                  {photos.length > 0 ? (
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+                      {photos.slice(0, 3).map((p, idx) => (
+                        <div
+                          key={idx}
+                          className="h-8 w-8 sm:h-12 sm:w-12 shrink-0 rounded-md sm:rounded-lg overflow-hidden border border-border bg-surface"
+                        >
+                          <img
+                            src={p.previewUrl}
+                            alt="thumb"
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ))}
+                      {photos.length > 3 && (
+                        <div className="h-8 w-8 sm:h-12 sm:w-12 shrink-0 rounded-md sm:rounded-lg bg-surface border border-border flex items-center justify-center font-display font-bold text-[10px] sm:text-xs text-text-strong">
+                          +{photos.length - 3}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] sm:text-xs text-text/60 font-medium">
+                      No photos attached
+                    </p>
+                  )}
+                </div>
+
+                {/* Contact Card */}
+                <div className="rounded-xl sm:rounded-2xl border border-border/90 bg-background p-2.5 sm:p-4 text-left relative">
+                  <div className="flex items-center justify-between border-b border-border pb-1.5 mb-1.5">
+                    <span className="font-display text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-strong truncate">
+                      Contact
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => changeStep(7)}
+                      className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-primary hover:underline shrink-0"
+                    >
+                      <Edit3 size={10} /> Edit
+                    </button>
+                  </div>
+                  <div className="space-y-0.5 text-[11px] sm:text-xs">
+                    <p className="font-display font-bold text-text-strong truncate">{name}</p>
+                    <p className="text-text/80 font-medium truncate">+91 {phone}</p>
+                    <p className="text-text/70 truncate">PIN: <strong className="text-text-strong">{pincode}</strong></p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Primary Conversion Button (Selvi Red CTA) */}
+              <div className="pt-1 sm:pt-3">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={handleSubmit}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-primary hover:bg-primary-dark px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-base font-extrabold uppercase tracking-wider text-white shadow-xl shadow-primary/25 transition-all active:scale-[0.99] disabled:opacity-50"
+                >
+                  {busy ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Submitting Valuation Request...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={16} />
+                      <span>GET MY VALUATION</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* ── Error Banner ── */}
+        {error && (
+          <div className="mt-2.5 sm:mt-4 rounded-xl border border-selvi-red/30 bg-selvi-red/10 p-2.5 sm:p-3 text-xs font-bold text-selvi-red flex items-center gap-2 animate-in fade-in">
+            <X size={14} className="shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* ── Clean Consistent Bottom Navigation ── */}
+        {step < TOTAL_STEPS && (
+          <div className="mt-3 sm:mt-8 pt-2.5 sm:pt-5 border-t border-border/70 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={goBack}
+              className="inline-flex items-center gap-1 sm:gap-1.5 rounded-xl border border-border bg-background hover:bg-surface px-3.5 sm:px-5 py-2 sm:py-3 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-text-strong transition-all active:scale-95"
+            >
+              <ArrowLeft size={13} />
+              <span>Back</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={goNext}
+              className="inline-flex items-center gap-1 sm:gap-1.5 rounded-xl bg-primary hover:bg-primary-dark px-5 sm:px-7 py-2 sm:py-3 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-primary/20 transition-all active:scale-95"
+            >
+              <span>Continue</span>
+              <ArrowRight size={13} />
+            </button>
+          </div>
+        )}
+
+        {step === TOTAL_STEPS && (
+          <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-border/60 flex items-center justify-start">
+            <button
+              type="button"
+              onClick={goBack}
+              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-text/70 hover:text-primary transition-colors"
+            >
+              <ArrowLeft size={12} />
+              <span>Back to Contact Info</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Subtle Understated Reassurance Beneath Form ── */}
+      <div className="text-center pt-1 sm:pt-2">
+        <p className="text-[11px] sm:text-xs font-medium text-text/60">
+          Free valuation • No obligation • Your details are secure
+        </p>
       </div>
     </div>
   );
 }
-

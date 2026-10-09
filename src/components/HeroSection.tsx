@@ -57,7 +57,7 @@ export default function HeroSection() {
 
         {/* 1. DIRECTIONAL OVERLAY (LEFT TEXT CONTRAST, RIGHT VIVID SCENERY) */}
         <div
-          className="absolute inset-0 -z-10 bg-gradient-to-r from-[#F7F2E8]/75 via-[#F7F2E8]/20 to-transparent max-md:from-[#F7F2E8]/85 max-md:to-transparent"
+          className="absolute inset-0 -z-10 bg-gradient-to-r from-white/75 via-white/20 to-transparent max-md:from-white/85 max-md:to-transparent"
           aria-hidden="true"
         />
 

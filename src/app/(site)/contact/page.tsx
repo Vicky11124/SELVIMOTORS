@@ -24,7 +24,7 @@ export default function ContactPage() {
         <div className="container-x">
           <div className="mx-auto max-w-4xl text-center">
             {/* Header Badge */}
-            <div className="animate-slide-left inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-wider text-cream uppercase sm:px-4 sm:py-1.5 sm:text-xs">
+            <div className="animate-slide-left inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-wider text-white uppercase sm:px-4 sm:py-1.5 sm:text-xs">
               <Sparkles className="h-2.5 w-2.5 text-accent sm:h-3.5 sm:w-3.5" />
               <span className="sm:hidden">Contact Selvi Motors • Saidapet</span>
               <span className="hidden sm:inline">Contact Selvi Motors • Saidapet, Chennai</span>
@@ -33,13 +33,13 @@ export default function ContactPage() {
             {/* Main Headline */}
             <h1 className="animate-slide-left-delay-1 mt-2.5 text-2xl font-extrabold tracking-tight text-white xs:text-3xl sm:mt-6 sm:text-6xl sm:leading-[1.1]">
               WE&apos;RE HERE TO HELP.{' '}
-              <span className="block text-cream">
+              <span className="block text-emerald-300">
                 LET&apos;S TALK BIKES.
               </span>
             </h1>
 
             {/* Concise Intro */}
-            <p className="animate-slide-left-delay-2 mt-2.5 text-xs leading-relaxed text-cream/90 sm:mt-6 sm:text-xl">
+            <p className="animate-slide-left-delay-2 mt-2.5 text-xs leading-relaxed text-white/90 sm:mt-6 sm:text-xl">
               Have a question about buying, selling, or exchanging a motorcycle? Call, WhatsApp, or visit our Saidapet showroom today.
             </p>
 
@@ -88,7 +88,7 @@ export default function ContactPage() {
             </div>
 
             {/* Quick Badges Pill Bar */}
-            <div className="hidden sm:flex sm:mt-10 sm:flex-wrap sm:items-center sm:justify-center sm:gap-3 text-xs font-medium text-cream">
+            <div className="hidden sm:flex sm:mt-10 sm:flex-wrap sm:items-center sm:justify-center sm:gap-3 text-xs font-medium text-white/90">
               <div className="flex items-center justify-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-center transition hover:border-white/40 sm:rounded-full sm:px-3 sm:py-1">
                 <MapPin className="h-3.5 w-3.5 shrink-0 text-accent" />
                 <span className="truncate">Saidapet, Chennai</span>

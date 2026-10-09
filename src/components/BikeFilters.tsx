@@ -434,7 +434,7 @@ export default function BikeFilters({ brands, totalAvailable = 0 }: BikeFiltersP
                 value={brandSearch}
                 onChange={(e) => setBrandSearch(e.target.value)}
                 placeholder="Find brand..."
-                className="mb-2 w-full rounded-lg border border-line bg-cream px-2.5 py-1.5 text-xs text-dark placeholder:text-slate/60 focus:border-primary focus:outline-none"
+                className="mb-2 w-full rounded-lg border border-line bg-surface px-2.5 py-1.5 text-xs text-dark placeholder:text-slate/60 focus:border-primary focus:outline-none"
               />
               <div className="max-h-56 overflow-y-auto space-y-1 pr-1 text-xs">
                 {filteredBrandsList.map((b) => {
@@ -510,7 +510,7 @@ export default function BikeFilters({ brands, totalAvailable = 0 }: BikeFiltersP
                       className={`rounded-md border px-2 py-1.5 text-center text-[11px] font-semibold transition-colors ${
                         isCur
                           ? 'border-primary bg-primary text-white'
-                          : 'border-line bg-cream text-slate hover:border-primary/40 hover:text-primary'
+                          : 'border-line bg-surface text-slate hover:border-primary/40 hover:text-primary'
                       }`}
                     >
                       {pr.label}
@@ -529,7 +529,7 @@ export default function BikeFilters({ brands, totalAvailable = 0 }: BikeFiltersP
                       value={minPriceDraft}
                       onChange={(e) => setMinPriceDraft(e.target.value)}
                       placeholder="e.g. 50000"
-                      className="w-full rounded-md border border-line bg-cream px-2 py-1.5 text-xs text-dark focus:border-primary focus:outline-none"
+                      className="w-full rounded-md border border-line bg-surface px-2 py-1.5 text-xs text-dark focus:border-primary focus:outline-none"
                     />
                   </div>
                   <div>
@@ -539,7 +539,7 @@ export default function BikeFilters({ brands, totalAvailable = 0 }: BikeFiltersP
                       value={maxPriceDraft}
                       onChange={(e) => setMaxPriceDraft(e.target.value)}
                       placeholder="e.g. 250000"
-                      className="w-full rounded-md border border-line bg-cream px-2 py-1.5 text-xs text-dark focus:border-primary focus:outline-none"
+                      className="w-full rounded-md border border-line bg-surface px-2 py-1.5 text-xs text-dark focus:border-primary focus:outline-none"
                     />
                   </div>
                 </div>
@@ -600,7 +600,7 @@ export default function BikeFilters({ brands, totalAvailable = 0 }: BikeFiltersP
                       className={`rounded-lg border px-2 py-1.5 text-center text-xs font-semibold transition-colors ${
                         isSel
                           ? 'border-primary bg-primary text-white'
-                          : 'border-line bg-cream text-slate hover:border-primary/40 hover:text-primary'
+                          : 'border-line bg-surface text-slate hover:border-primary/40 hover:text-primary'
                       }`}
                     >
                       {y.label}
@@ -851,7 +851,7 @@ export default function BikeFilters({ brands, totalAvailable = 0 }: BikeFiltersP
             />
 
             {/* Drawer Content Panel (Right on Desktop, Bottom Sheet on Mobile) */}
-            <div className="relative z-[100000] flex h-screen w-full max-w-md flex-col border-l border-line bg-cream text-dark shadow-2xl max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:h-[90vh] max-sm:rounded-t-2xl max-sm:border-t animate-in slide-in-from-right max-sm:slide-in-from-bottom duration-200">
+            <div className="relative z-[100000] flex h-screen w-full max-w-md flex-col border-l border-line bg-surface text-dark shadow-2xl max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:h-[90vh] max-sm:rounded-t-2xl max-sm:border-t animate-in slide-in-from-right max-sm:slide-in-from-bottom duration-200">
               {/* Drawer Header */}
               <div className="flex items-center justify-between border-b border-line px-5 py-4 bg-surface">
                 <div className="flex items-center gap-2">
@@ -866,7 +866,7 @@ export default function BikeFilters({ brands, totalAvailable = 0 }: BikeFiltersP
                 <button
                   type="button"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="rounded-lg p-1.5 text-slate hover:bg-cream hover:text-dark"
+                  className="rounded-lg p-1.5 text-slate hover:bg-surface-muted hover:text-dark"
                   aria-label="Close filters"
                 >
                   <X size={20} />
@@ -955,7 +955,7 @@ export default function BikeFilters({ brands, totalAvailable = 0 }: BikeFiltersP
                         value={minPriceDraft}
                         onChange={(e) => setMinPriceDraft(e.target.value)}
                         placeholder="0"
-                        className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-xs text-dark focus:border-primary focus:outline-none"
+                        className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-xs text-dark focus:border-primary focus:outline-none"
                       />
                     </div>
                     <div>
@@ -965,7 +965,7 @@ export default function BikeFilters({ brands, totalAvailable = 0 }: BikeFiltersP
                         value={maxPriceDraft}
                         onChange={(e) => setMaxPriceDraft(e.target.value)}
                         placeholder="500000"
-                        className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-xs text-dark focus:border-primary focus:outline-none"
+                        className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-xs text-dark focus:border-primary focus:outline-none"
                       />
                     </div>
                   </div>
