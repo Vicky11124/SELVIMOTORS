@@ -14,21 +14,27 @@ dist/
 
 # Environment variables (keep secrets out of git)
 .env
+.env.*
 .env*.local
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+**/.env
+**/.env.*
+**/.env*.local
 
 # TypeScript
 next-env.d.ts
 *.tsbuildinfo
+tsconfig.tsbuildinfo
 
-# Logs
+# Logs & Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
 
 # OS
 .DS_Store
@@ -49,6 +55,13 @@ ehthumbs.db
 
 # Turbopack
 .turbo
+
+# Temporary test outputs & scratch
+*.tmp
+*.temp
+ssr_output*.html
+ssr_output*
+scratch/
 
 # Temporary image imports / staging
 public/hero image/

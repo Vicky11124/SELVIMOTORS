@@ -115,7 +115,6 @@ export default function AccordionGallery({
                 src={item.image}
                 alt={item.alt || item.label || ''}
                 fill
-                priority={i === 0}
                 sizes="(max-width: 640px) 100vw, 50vw"
                 className="object-cover"
               />

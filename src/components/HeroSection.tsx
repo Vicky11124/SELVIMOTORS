@@ -7,11 +7,9 @@ import SpecularButton from '@/components/ui/SpecularButton';
 
 export default function HeroSection() {
   const [scrollY, setScrollY] = useState(0);
-  const [loaded, setLoaded] = useState(false);
   const rafId = useRef<number | null>(null);
 
   useEffect(() => {
-    setLoaded(true);
     const handleScroll = () => {
       // Guard: only schedule one rAF per scroll burst
       if (rafId.current !== null) return;
@@ -39,16 +37,15 @@ export default function HeroSection() {
       <div className="relative mx-auto max-w-[1672px] overflow-hidden">
         {/* HERO IMAGE LAYER */}
         <div
-          className="absolute inset-0 -z-20 transform-gpu transition-transform duration-1000 ease-out will-change-transform"
-          style={{
-            transform: `translateY(${imageTranslateY}px) scale(${loaded ? 1 : 1.015})`,
-          }}
+          className="absolute inset-0 -z-20 transform-gpu"
+          style={imageTranslateY ? { transform: `translateY(${imageTranslateY}px)` } : undefined}
         >
           <Image
             src="/hero.png"
             alt="Selvi Motors Premium Pre-Owned Motorcycle"
             fill
             priority
+            fetchPriority="high"
             quality={90}
             sizes="100vw"
             className="object-cover object-[65%_center] sm:object-[60%_center]"

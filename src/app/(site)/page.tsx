@@ -187,7 +187,6 @@ export default async function HomePage() {
                     width={64}
                     height={64}
                     className="h-full w-full object-contain drop-shadow-md"
-                    loading="eager"
                   />
                 </div>
 
